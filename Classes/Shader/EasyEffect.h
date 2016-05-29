@@ -1,8 +1,7 @@
 ﻿#include "cocos2d.h"
-#include "cocos-ext.h"
 
 USING_NS_CC;
-USING_NS_CC_EXT;
+using namespace std;
 
 enum fadeTYPE{
 	white_FADE_IN,  
@@ -33,6 +32,7 @@ public:
 	static CCFiniteTimeAction* getAction(int nIndex, float t,CCNode* pNode=NULL);       //网格动作//getAction参数：(0-抖动、1-波浪、2-X轴翻转、3-Y轴翻转、4-放大镜、5-水波、6-液态、7-扭曲波浪、8-扭曲旋转、9-水波、10-破碎歪曲、11-网格散开、12-顶右淡出、13-底左淡出、14-向上淡出、15-向下淡出、16-网格消失、17-网格波浪、18-跳跃网格、19-行错开、20-列错开、21-翻页)、持续时间
 	void clearGirdAction(CCNode* pNode);									 //清除网格动作
 	static CCSprite* setShaderEffect(int size_x=0, int size_y=0, shaderEffType sType=shader_FadeTB, float ROtate=0,int origin_x=0,int origin_y=0,int source_x=0,int source_y=0,char* FileName="");//闪电链：x、y、旋转角度（顺时针）
+	
 	static void setFadeEffect(float time,fadeTYPE fType);		 	 //淡入淡出效果，白色，黑色
 	static CCFiniteTimeAction* shakeAction(float range);			 //抖动：范围
 	static CCFiniteTimeAction* numAction(NUM_TYPE nType);            //战斗信息显示：伤害，治愈、能量，状态，击杀
@@ -97,8 +97,10 @@ static const char* szCompShdKey[SHADER_MAX]={
 	"SHADER_GAUSSBLUR_BIG",
 	"SHADER_SKILLLOCK",
 };
-CCSprite* GFun_InitSpriteByJPG( char* szFile );
-void MySetShader(SHADER_TYPE byType,void* pParam);
+
+//CCSprite* GFun_InitSpriteByJPG( char* szFile );
+
+//void MySetShader(SHADER_TYPE byType,void* pParam);
 
 
 

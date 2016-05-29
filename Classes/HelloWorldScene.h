@@ -17,6 +17,6 @@ public:
 	CREATE_FUNC(HelloWorld);
 
 public:
-
+	NodeGrid* nodegrid;
 };
 

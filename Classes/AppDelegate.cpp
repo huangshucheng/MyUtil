@@ -51,10 +51,10 @@ bool AppDelegate::applicationDidFinishLaunching()
     }
 
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_WIN32)
-	AllocConsole();
+	/*AllocConsole();
 	freopen("CONIN$", "r", stdin);
 	freopen("CONOUT$", "w", stdout);
-	freopen("CONOUT$", "w", stderr);
+	freopen("CONOUT$", "w", stderr);*/
 #endif
 
     director->setDisplayStats(true);

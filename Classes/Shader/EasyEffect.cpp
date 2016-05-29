@@ -1,11 +1,8 @@
 ﻿#include "EasyEffect.h"
-#ifdef WIN32
+
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_WIN32)
 //#include "debug_def.h"
 #endif
-
-using namespace std;
-USING_NS_CC;
-USING_NS_CC_EXT;
 
 /*-------------------抖动，case：0-------------------*/
 //create参数：抖动程度、网格大小、持续时间、Z轴是否可用
@@ -296,7 +293,7 @@ public:
 
 //===========================================================================================================
 
-//getAction参数：特效编号（0～21）、持续时间
+//getAction参数：特效编号（0～21,31,32）、持续时间
 CCFiniteTimeAction* EasyEffect::getAction(int nIndex, float t,CCNode* pNode)
 {
 	CCDirector::sharedDirector()->setDepthTest(false);
@@ -370,12 +367,8 @@ CCFiniteTimeAction* EasyEffect::getAction(int nIndex, float t,CCNode* pNode)
 		break;
 	default: return NULL;
 	}
-	//CCAction * pCallback = CCCallFuncN::create(pNode, callfuncN_selector(EasyEffect::clearGirdAction));
-	CCAction * pCallback = CCCallFuncN::create([pNode](Node*){
-		//if (pNode->getGrid() != NULL)pNode->setGrid(NULL);
-	});
 
-	CCFiniteTimeAction* pRun	= CCSequence::create (pAct1,pCallback,NULL);
+	CCFiniteTimeAction* pRun = CCSequence::create (pAct1,NULL);
 	return pRun;
 }
 
@@ -384,7 +377,6 @@ void EasyEffect::clearGirdAction(CCNode* pNode)
 	//if(pNode->getGrid()!=NULL)pNode->setGrid(NULL);
 }
 
-
 //淡入淡出=====================================================
 
 void EasyEffect::setFadeEffect(float fTime,fadeTYPE fType)
@@ -392,6 +384,7 @@ void EasyEffect::setFadeEffect(float fTime,fadeTYPE fType)
 	CCLayerColor* clrLayer	= (CCLayerColor*)CCDirector::sharedDirector()->getRunningScene()->getChildByTag(99);
 	if(clrLayer == NULL)
 		return;
+
 	switch(fType)
 	{
 	case white_FADE_IN:
@@ -438,10 +431,7 @@ void EasyEffect::setFadeEffect(float fTime,fadeTYPE fType)
 	}
 }
 
-
-
 //抖动
-
 CCFiniteTimeAction* EasyEffect::shakeAction(float range)
 {
 	CCPointArray* pointAry=CCPointArray::create(7);
@@ -456,7 +446,6 @@ CCFiniteTimeAction* EasyEffect::shakeAction(float range)
 }
 
 //战斗信息
-
 CCFiniteTimeAction* EasyEffect::numAction(NUM_TYPE nType)
 {
 	switch(nType)
@@ -519,7 +508,7 @@ CCFiniteTimeAction* EasyEffect::numAction(NUM_TYPE nType)
 	}
 }
  
-
+/*
 //Frame渐隐边框
 CCSprite* EasyEffect::setShaderEffect(int size_x, int size_y,shaderEffType sType, float ROtate,int origin_x,int origin_y,int source_x,int source_y,char* FileName)
 {
@@ -561,7 +550,8 @@ CCSprite* EasyEffect::setShaderEffect(int size_x, int size_y,shaderEffType sType
 	pProgram->autorelease();
 	return pParam;
 }
-
+*/
+/*
 void MySetShader(SHADER_TYPE byType,void* pParam){
 	//CCostTime time1;
 	if(pParam == NULL)
@@ -574,10 +564,21 @@ void MySetShader(SHADER_TYPE byType,void* pParam){
 	else if(byType == SHADER_BRIGHTNESS || byType == SHADER_NULL || byType == SHADER_GRAY || byType == SHADER_GAUSSBLUR)
 	{
 		CCObject* child;
-		CCARRAY_FOREACH(pBtn->getChildren(), child){
-			CCNode* pCNode = (CCNode*) child;
-			MySetShader((SHADER_TYPE)byType,pCNode);
 
+		//CCARRAY_FOREACH(pBtn->getChildren(), child)
+		//{
+		//	CCNode* pCNode = (CCNode*) child;
+		//	MySetShader((SHADER_TYPE)byType,pCNode);
+
+		//}
+
+		for (auto& child: pBtn->getChildren())
+		{
+			CCNode* pCNode = (CCNode*)child;
+			if (pCNode)
+			{
+				MySetShader((SHADER_TYPE)byType, pCNode);
+			}
 		}
 	}
 	CCGLProgram* pProgram;
@@ -734,6 +735,7 @@ void MySetShader(SHADER_TYPE byType,void* pParam){
 		pProgram->autorelease();
 	}
 }
+*/
 /*
 CCSprite* GFun_InitSpriteByJPG( char* szFile )
 {
@@ -742,7 +744,7 @@ CCSprite* GFun_InitSpriteByJPG( char* szFile )
 	Texture2D*	pText2D	= TextureCache::sharedTextureCache()->addImage(szFile);
 	if(pText2D == NULL)
 	{
-		//pSprTmp->init();
+		pSprTmp->init();
 		return pSprTmp;
 	}
 
