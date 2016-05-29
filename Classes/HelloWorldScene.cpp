@@ -51,7 +51,7 @@ bool HelloWorld::init()
 	Sprite* _sp = Sprite::create("HelloWorld.png");
 	_sp->setPosition(CommonFunction::getVisibleAchor(Anchor::Center,Vec2(0,0)));
 
-	nodegrid = NodeGrid::create();
+	nodegrid = NodeGrid::create(); //3D效果放在NodeGrid才能显示
 	nodegrid->addChild(_sp);
 	this->addChild(nodegrid);
 
