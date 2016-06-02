@@ -3,6 +3,18 @@
 
 USING_NS_CC;
 
+/*
+只能是.fnt类型的字
+	使用：
+	runNumber = RunNumLabel::create(CommonFunction::getString(00), "fonts/fnt/huangshe.fnt", 0.5f, 0, TextHAlignment::LEFT, Vec2::ZERO);
+	runNumber->setAnchorPoint(Vec2(0, 0.5));
+	runNumber->setPosition(CommonFunction::getVisibleAchor(0, 1, Vec2(390, -85)));
+	addChild(runNumber);
+	------
+	static int index = 0;
+	index += 10;
+	runNumber->setString(Value(index).asString());
+*/
 class RunNumLabel : public Node
 {
 public:
