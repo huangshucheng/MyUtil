@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "Layer/BaseLayer.h"
+#include "BaseLayer.h"
 #include "cocos2d.h"
 
 USING_NS_CC;
