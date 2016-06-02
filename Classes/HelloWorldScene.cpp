@@ -1,6 +1,7 @@
 ﻿#include "HelloWorldScene.h"
 #include "Shader/EasyEffect.h"
 #include "Utils/CommonFunction.h"
+#include "LayerTest.h"
 
 HelloWorld::HelloWorld()
 {
@@ -16,11 +17,6 @@ Scene* HelloWorld::createScene()
     auto scene = Scene::create();
     auto layer = HelloWorld::create();
     scene->addChild(layer);
-
-	//auto layerColor = LayerColor::create(Color4B::GRAY);
-	//layerColor->setTag(99);
-	//scene->addChild(layerColor);
-
     return scene;
 }
 
@@ -48,7 +44,8 @@ bool HelloWorld::init()
 
 	//------------------------------------------//
 
-	Sprite* _sp = Sprite::create("HelloWorld.png");
+	Sprite* _sp = Sprite::create("tollgateBG.png");
+	_sp->setScale(2.0f);
 	_sp->setPosition(CommonFunction::getVisibleAchor(Anchor::Center,Vec2(0,0)));
 
 	nodegrid = NodeGrid::create(); //3D效果放在NodeGrid才能显示
@@ -61,6 +58,8 @@ bool HelloWorld::init()
 
 void HelloWorld::menuCloseCallback(Ref* pSender)
 {
+	addChild(LayerTest::create(),10);
+
     //Director::getInstance()->end();
 	//auto shaky3D = Shaky3D::create(5, CCSize(10, 10), 15, false);
 
