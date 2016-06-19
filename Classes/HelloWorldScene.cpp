@@ -57,20 +57,16 @@ bool HelloWorld::init()
 	runNumber->setPosition(CommonFunction::getVisibleAchor(0, 1, Vec2(390, -85)));
 	addChild(runNumber);*/
 
-	runNumber_1 = AttackRunNumLabel::create("0",1.0f,100,TextHAlignment::LEFT);
+	/*runNumber_1 = AttackRunNumLabel::create("0",1.0f,100,TextHAlignment::LEFT);
 	runNumber_1->setAnchorPoint(Vec2(0, 0.5));
 	runNumber_1->setPosition(CommonFunction::getVisibleAchor(0.5, 0.5, Vec2(0, 0)));
-	addChild(runNumber_1);
+	addChild(runNumber_1);*/
     return true;
 }
 
 void HelloWorld::menuCloseCallback(Ref* pSender)
 {
-	//addChild(LayerTest::create(),10);
-	static int index = 0;
-	index += 10;
-	runNumber_1->setString(Value(index).asString());
-
+	addChild(LayerTest::create(),10);
 	ToastManger::getInstance()->createToast(CommonFunction::WStrToUTF8(L"黄塾城"));
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
     exit(0);

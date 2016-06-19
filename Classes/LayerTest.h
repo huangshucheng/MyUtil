@@ -8,6 +8,6 @@ public:
 	virtual bool init();
 	CREATE_FUNC(LayerTest);
 private:
-
+	void	addParallaxNode();	//视觉差效果
 };
 
