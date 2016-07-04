@@ -4,10 +4,12 @@
 #include "UIEffect/RunNumLabel.h"
 #include "UIEffect/AttackRunNumLabel.h"
 #include "Layer/ToastLayer/ToastManger.h"
+#include <iostream>
+#include "LayerTest.h"
 
 USING_NS_CC;
 
-class HelloWorld : public cocos2d::Layer
+class HelloWorld : public cocos2d::Layer ,LayerTest::IServers
 {
 public:
 	HelloWorld();
@@ -19,6 +21,9 @@ public:
     void menuCloseCallback(cocos2d::Ref* pSender);
 
 	CREATE_FUNC(HelloWorld);
+
+public:
+	virtual void sureclick();
 
 public:
 	NodeGrid* nodegrid;

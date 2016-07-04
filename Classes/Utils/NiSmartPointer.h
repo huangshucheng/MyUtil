@@ -31,9 +31,6 @@ protected:
 	T* m_pObject;
 };
 
-/*
-给一个类名 A进来， 为你定义一个智能指针 APtr 若定义成全局，哪里都可以用
-*/
 #define NiSmartPointer(classname) \
 class classname; \
 	typedef NiPointer<classname> classname##Ptr;

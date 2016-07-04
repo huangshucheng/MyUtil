@@ -1,7 +1,6 @@
 ﻿#include "HelloWorldScene.h"
 #include "Shader/EasyEffect.h"
 #include "Utils/CommonFunction.h"
-#include "LayerTest.h"
 
 HelloWorld::HelloWorld()
 {
@@ -26,7 +25,6 @@ bool HelloWorld::init()
     {
         return false;
     }
-
     auto visibleSize = Director::getInstance()->getVisibleSize();
     Vec2 origin = Director::getInstance()->getVisibleOrigin();
 
@@ -66,7 +64,8 @@ bool HelloWorld::init()
 
 void HelloWorld::menuCloseCallback(Ref* pSender)
 {
-	addChild(LayerTest::create(),10);
+	auto layer = LayerTest::create(this);
+	addChild(layer, 10);
 	ToastManger::getInstance()->createToast(CommonFunction::WStrToUTF8(L"黄塾城"));
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
     exit(0);
@@ -74,3 +73,7 @@ void HelloWorld::menuCloseCallback(Ref* pSender)
 
 }
 
+void HelloWorld::sureclick()	//实现虚方法
+{
+	std::cout << "我在helloworld层上哟" << std::endl;
+}
