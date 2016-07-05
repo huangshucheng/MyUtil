@@ -45,14 +45,15 @@ void Base::createBg()
 	layercolor->setAnchorPoint(Vec2(0.5, 0.5));
 	addChild(layercolor, -1);
 
-	auto tintTo = FadeTo::create(0.3f,150);
-	layercolor->runAction(tintTo);
+	auto tintTo = FadeTo::create(0.3f, 130);
+	auto ease = EaseExponentialOut::create(tintTo);
+	layercolor->runAction(ease);
 }
 
 bool Base::onTouchBegan(Touch *pTouch, Event *pEvent)
 {
 	//如果子节点的tag为99，说明是背景，点击外面背景外面移除此层，若不想用此功能可以重写此方法
-	for (auto &child: m_popNode->getChildren())
+	for (auto &child : m_popNode->getChildren())
 	{
 		if (child->getTag() == 99)
 		{
@@ -83,7 +84,8 @@ void Base::close()
 {
 	this->retain();
 
-	auto fadeTo = FadeTo::create(0.1f,0);
+	auto fadeTo = FadeTo::create(0.1f, 0);
+	auto ease = EaseExponentialOut::create(fadeTo);
 	auto callFunc = CallFunc::create([this](){
 		if (getParent())
 		{
@@ -91,7 +93,7 @@ void Base::close()
 		}
 	});
 
-	auto seq = Sequence::create(fadeTo,callFunc,nullptr);
+	auto seq = Sequence::create(ease, callFunc, nullptr);
 	if (layercolor)
 	{
 		layercolor->runAction(seq);
