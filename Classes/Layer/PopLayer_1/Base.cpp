@@ -1,5 +1,5 @@
 ﻿#include "Base.h"
-#include "Utils/CommonFunction.h"
+#include "CommonFunction.h"
 
 bool Base::init()
 {
@@ -52,6 +52,16 @@ void Base::createBg()
 
 bool Base::onTouchBegan(Touch *pTouch, Event *pEvent)
 {
+	return true;
+}
+
+void Base::onTouchMoved(Touch *pTouch, Event *pEvent)
+{
+
+}
+
+void Base::onTouchEnded(Touch *pTouch, Event *pEvent)
+{
 	//如果子节点的tag为99，说明是背景，点击外面背景外面移除此层，若不想用此功能可以重写此方法
 	for (auto &child : m_popNode->getChildren())
 	{
@@ -67,24 +77,12 @@ bool Base::onTouchBegan(Touch *pTouch, Event *pEvent)
 			}
 		}
 	}
-	return true;
-}
-
-void Base::onTouchMoved(Touch *pTouch, Event *pEvent)
-{
-
-}
-
-void Base::onTouchEnded(Touch *pTouch, Event *pEvent)
-{
-
 }
 
 void Base::close()
 {
 	this->retain();
-
-	auto fadeTo = FadeTo::create(0.1f, 0);
+	auto fadeTo = FadeOut::create(0.01f);
 	auto ease = EaseExponentialOut::create(fadeTo);
 	auto callFunc = CallFunc::create([this](){
 		if (getParent())
@@ -94,11 +92,7 @@ void Base::close()
 	});
 
 	auto seq = Sequence::create(ease, callFunc, nullptr);
-	if (layercolor)
-	{
-		layercolor->runAction(seq);
-	}
-
+	this->runAction(seq);
 	this->autorelease();
 }
 

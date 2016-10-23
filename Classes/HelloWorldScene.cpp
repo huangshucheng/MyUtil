@@ -64,8 +64,19 @@ bool HelloWorld::init()
 
 void HelloWorld::menuCloseCallback(Ref* pSender)
 {
-	auto layer = LayerTest::create(this);
-	addChild(layer, 10);
+
+	/*ShaderNode* shader = ShaderNode::shaderNodeWithVertex("shader.vsh", "shader.fsh");
+	if (shader)
+	{
+		log("shader is exit");
+		shader->setContentSize(Size(1136,640));
+		shader->setColor(Color4F(1.0, 1.0, 0, 0.5));
+		this->addChild(shader, 100);
+	}*/
+
+
+	//auto layer = LayerTest::create(this);
+	//addChild(layer, 10);
 	ToastManger::getInstance()->createToast(CommonFunction::WStrToUTF8(L"黄塾城"));
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
     exit(0);

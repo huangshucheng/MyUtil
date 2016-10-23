@@ -6,6 +6,7 @@
 #include "Layer/ToastLayer/ToastManger.h"
 #include <iostream>
 #include "LayerTest.h"
+#include "ShaderNode.h"
 
 USING_NS_CC;
 
