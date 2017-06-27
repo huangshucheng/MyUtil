@@ -1,7 +1,7 @@
 
 local GameScene = class("GameScene", cc.load("mvc").ViewBase)
 
-local joystick = nil
+local joystick = require('app.views.JoystickEx')
 
 function GameScene:onCreate()
         
@@ -14,10 +14,10 @@ function GameScene:onCreate()
 end
 
 function GameScene:addUI()
-    self._joystick = require('app.views.JokstickEx'):GetInstance()
+--[[
+    self._joystick = joystick:GetInstance()
     if not self._joystick then return end
     self:addChild(self._joystick)
-    ---[[测试虚拟摇杆 ]]   
    local function onNaviCallback(direction , angle)
         if self._spRotate then
             self._spRotate:setRotation(-angle)
@@ -29,10 +29,13 @@ function GameScene:addUI()
     local toucharea = {x = 0,y = 0,width = display.width / 3 ,height = display.height / 2}
     self._joystick:Init(true, false, nil,"MB_YAOGAN.png","BT_YAOGAN.png",toucharea,onNaviCallback)  
     self._joystick:SetEnable(true)
+    ]]
+    local touchlayer = require("app.views.TouchLayer"):create()
+    self:addChild(touchlayer)
 end
 
 function GameScene:onExit()
-    self.super.onExit(self)
+   -- self.super.onExit(self)
     self._joystick:ReleaseInstance()
 end
 
