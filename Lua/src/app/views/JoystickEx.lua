@@ -13,10 +13,7 @@ IsEnable 是否启用
 --[[
 http://blog.csdn.net/a102111/article/details/60467352
 ]]
---local JoystickEx = class("JoystickEx", cc.Layer)
-local JoystickEx = class("JoystickEx",function()  
-    return cc.Layer:create()  
-end)  
+local JoystickEx = class("JoystickEx", cc.Layer)  
 
 -- 8个方向  
 JoystickEx.eDirection = {  
@@ -32,7 +29,6 @@ JoystickEx.eDirection = {
 }
 
 function JoystickEx:ctor()
-    
     self._rootNode = nil
     self._instance = nil  
     self._touchArea = nil  
@@ -64,7 +60,7 @@ end
 
 function JoystickEx:Release()  
     if self._touchListener ~= nil then  
-        cc.EventDispatcher:removeEventListener(self._touchListener)  
+        self:getEventDispatcher():removeEventListener(self._touchListener)  
         self._touchListener = nil  
     end  
   
@@ -82,11 +78,9 @@ naviName 摇杆小图
 naviCallback 方向更改回调，回传角度与8个反向，参考eDirection，角度以右为0，上为90，下为-90  
 ]] 
 
--- 初始化 naviPosition nil则根据点击位置变化 有值则固定位置  
+-- [[初始化 naviPosition nil则根据点击位置变化 有值则固定位置  ]]
 function JoystickEx:Init(isEnable,isAutoHide,naviPosition,naviBg,naviName,touchArea,naviCallback)  
-    -- 没有固定位置 自动隐藏  
-    --if not naviPosition then isAutoHide = true end  
-
+    
     self._naviCallback = naviCallback  
     self._naviBallNode = display.newSprite(naviName)
     self._rootNode = display.newSprite(naviBg)
@@ -99,12 +93,7 @@ function JoystickEx:Init(isEnable,isAutoHide,naviPosition,naviBg,naviName,touchA
     self:SetNaviPosition(naviPosition)
 
     if not naviPosition then self:resetRootNodePos() end
-
-    local _w = self._rootNode:getContentSize().width / 2
-    local _h = self._rootNode:getContentSize().height / 2
-
-    --self._naviBallNode:setScale(0.5)
-    self._naviBallNode:setPosition(cc.p(_w ,_h))
+    self:resetNaviPosition()
 
     self:SetTouchArea(touchArea)  
     self:SetAutoHide(isAutoHide)  
@@ -120,11 +109,20 @@ function JoystickEx:Init(isEnable,isAutoHide,naviPosition,naviBg,naviName,touchA
     eventDispatcher:addEventListenerWithSceneGraphPriority(self._touchListener, self)  
     return true  
 end
-
+--[[重置根节点位置]]
 function JoystickEx:resetRootNodePos(pos)
     if not self._rootNode then return end
-    pos = pos or  cc.p(self._rootNode:getContentSize().width,self._rootNode:getContentSize().height)
+    pos = pos or  cc.p(self._rootNode:getContentSize().width - 50,self._rootNode:getContentSize().height - 50)
     self._rootNode:setPosition(pos)
+end
+
+--[[重置中间节点位置]]
+function JoystickEx:resetNaviPosition(pos)
+    if not self._rootNode or not self._naviBallNode then return end
+    local _w = self._rootNode:getContentSize().width / 2 
+    local _h = self._rootNode:getContentSize().height / 2
+    pos = pos or cc.p(_w,_h)
+    self._naviBallNode:setPosition(pos)
 end
 
 function JoystickEx:setNodeOpacity(node,opacity)
@@ -140,7 +138,9 @@ end
 function JoystickEx:onExit()
     self.super.onExit(self)
     local eventDispatcher = self:getEventDispatcher()
-    eventDispatcher:removeEventListener(self._touchListener)
+    if self._touchListener then
+        eventDispatcher:removeEventListener(self._touchListener)
+    end
 end
 
 -- 启用  
@@ -215,14 +215,13 @@ function JoystickEx.onTouchBegan(touch, event)
             needNextProcess = false  
         end  
     end  
-    print("touch begin")
     return needNextProcess  
 end
 
 function JoystickEx.onTouchMoved(touch, event) 
     if not JoystickEx._instance  then return end
     local self = JoystickEx._instance
-    self._isTouchBegin = false 
+    if self._isTouchBegin then self._isTouchBegin = false end
     local touchPoint = touch:getLocation()  
     self:Update(touchPoint, true)  
 end 
@@ -230,21 +229,33 @@ end
 function JoystickEx.onTouchEnded(touch, event) 
     if not JoystickEx._instance  then return end
     local self = JoystickEx._instance
-    self._isTouchBegin = false 
+    if self._isTouchBegin then self._isTouchBegin = false end
     if not self then return false end 
-    self:Update(nil, false) 
-
-    self:resetRootNodePos()
+    local touchPoint = touch:getLocation() 
+    self:Update(touchPoint, true) 
+    if self:IsPosCanChange() then self:resetRootNodePos() end
+    self:resetNaviPosition()
     self:setNodeOpacity(self._rootNode,255)
+    if self._rootNode then
+        self._rootNode:setVisible(not self:IsAutoHide())
+    end
     print("touch end")
 end 
 
 function JoystickEx.onTouchCanceled(touch, event)
     if not JoystickEx._instance  then return end
-    local self = JoystickEx._instance 
-    self._isTouchBegin = false
-    self:Update(nil, false)
-    self:setNodeOpacity(self._rootNode,255)  
+    local self = JoystickEx._instance
+    if self._isTouchBegin then self._isTouchBegin = false end
+    if not self then return false end 
+    local touchPoint = touch:getLocation()
+    self:Update(touchPoint, false) 
+    if self:IsPosCanChange() then self:resetRootNodePos() end
+    self:resetNaviPosition()
+    self:setNodeOpacity(self._rootNode,255)
+    if self._rootNode then
+        self._rootNode:setVisible(not self:IsAutoHide())
+    end
+    print("touch cancel")
 end 
 
 function JoystickEx:Update(touchPos, isMove)  
@@ -268,8 +279,6 @@ function JoystickEx:UpdateUI(direction, angle, isShow)
             local radians = math.rad(angle)  
             ballPos.x = math.cos(radians)*(self._radius) + _w
             ballPos.y = math.sin(radians)*(self._radius) + _h
-            --ballPos.x = math.cos(radians)  + self._touchArea.width / 2      --todo  控制在框内自由转动
-            --ballPos.y = math.sin(radians)  + self._touchArea.height / 2
         end  
         self._naviBallNode:setPosition(ballPos)  
         -- 显示更新  
@@ -303,7 +312,7 @@ function JoystickEx:UpdateUIForTouchPos(touchPos,direction, angle, isShow)
     if _dis >= self._radius then _dis = self._radius end
 
     local ballPos = {x = r_w , y = r_h}  
-    print("ballpos before-> x:" .. ballPos.x .. "  ,y" .. ballPos.y)
+   -- print("ballpos before-> x:" .. ballPos.x .. "  ,y" .. ballPos.y)
     if isShow then  
         if self._isTouchBegin then direction = self.eDirection.None end
         if direction ~= self.eDirection.None then  
@@ -311,7 +320,7 @@ function JoystickEx:UpdateUIForTouchPos(touchPos,direction, angle, isShow)
             ballPos.x = math.cos(radians)*(_dis + 20) + r_w
             ballPos.y = math.sin(radians)*(_dis + 20) + r_h
         end  
-     print("ballpos after-> x:" .. ballPos.x .. "  ,y" .. ballPos.y)
+    -- print("ballpos after-> x:" .. ballPos.x .. "  ,y" .. ballPos.y)
         self._naviBallNode:setPosition(ballPos)  
         if self:IsPosCanChange() then  
             if self._downPos then
@@ -319,12 +328,12 @@ function JoystickEx:UpdateUIForTouchPos(touchPos,direction, angle, isShow)
             end
         end  
     end  
-    self._rootNode:setVisible(isShow)  
+    if self._rootNode then self._rootNode:setVisible(isShow)  end
 end
   
 function JoystickEx:UpdateData(touchPos, isMove)  
     local direction = self.eDirection.None  
-    local angle = 0  
+    local angle = 0 
     local isNeedUpdate = false  
   
     if not isMove then  
@@ -339,7 +348,7 @@ function JoystickEx:UpdateData(touchPos, isMove)
     if isNeedUpdate then  
         if self._downPos ~= nil and touchPos ~= nil then  
             local centerPos = self._downPos  
-            if not self:IsPosCanChange() then  
+            if not self:IsPosCanChange() then   --固定位置
                 centerPos = self._naviPosition  
             end  
             -- 弧度 转 角度  
