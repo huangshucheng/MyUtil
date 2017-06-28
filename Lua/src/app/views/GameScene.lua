@@ -1,15 +1,9 @@
 
 local GameScene = class("GameScene", cc.load("mvc").ViewBase)
 
-local joystick = require('app.views.JoystickEx')
+--local joystick = require('app.views.JoystickEx')
 
 function GameScene:onCreate()
-        
-    self._joystick = nil
-
-    self._spRotate = display.newSprite("navstick.png")
-    self._spRotate:move(cc.p(500,300))
-    self._spRotate:addTo(self)
     self:addUI()
 end
 
@@ -35,8 +29,7 @@ function GameScene:addUI()
 end
 
 function GameScene:onExit()
-   -- self.super.onExit(self)
-    self._joystick:ReleaseInstance()
+    --self._joystick:ReleaseInstance()
 end
 
 return GameScene
