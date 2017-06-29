@@ -3,7 +3,6 @@ local JoyStickObj = class("JoyStickObj", cc.Node)
  local CalUtil = require("app.utils.CalUtil")
 
 function JoyStickObj:ctor()
-    print("JoyStickObj------->oncreate")
     self._ptHold = cc.p(0,0)    --  开始点击位置
     self._bInTouch = false      --  按钮点击开始
     self._fx = 0                -- 0-1
@@ -12,6 +11,7 @@ function JoyStickObj:ctor()
     self._spBg = nil            --  背景
     self._spJoys = nil          --  移动点
     self._radius_bg = {_w = 0,_h = 0}       --背景宽高
+
     self:initUI()               
 end
 
@@ -20,12 +20,11 @@ function JoyStickObj:initUI()
     self._radius_bg._w = self._spBg:getContentSize().width / 2
     self._radius_bg._h = self._spBg:getContentSize().height / 2
     self._fDisMax = self._radius_bg._w
-    --print("radius-> _w:" .. self._radius_bg._w .. '   _h:' .. self._radius_bg._h)
     self._spBg:addTo(self)
     self._spJoys = display.newSprite('BT_YAOGAN.png')
     self._spBg:addChild(self._spJoys)
     self._spJoys:setPosition(cc.p(self._radius_bg._w,self._radius_bg._h))
-    --self:setJoyStickOpacity(50)
+    self:setJoyStickOpacity(50)
 end
 
 function JoyStickObj:setJoyStickOpacity(opacity)
@@ -37,6 +36,9 @@ end
 function JoyStickObj:TouchBegin(ptBegin)
     self._ptHold = ptBegin
     self._bInTouch = true
+    self._fx = 0
+    self._fy = 0
+    self:setJoyStickOpacity(225)
 end
 
 function JoyStickObj:TouchMove(ptMove)
@@ -62,26 +64,14 @@ end
 
 function JoyStickObj:TouchEnd()
     self._bInTouch = false
-    if not self:isActive() then
-        self._spJoys:setPosition(cc.p(self._radius_bg._w,self._radius_bg._h))
-    end
+    self:setJoyStickOpacity(50)
+    self:Update()
 end
 
 function JoyStickObj:Update()
-    self:setVisible(self._bInTouch)
---[[
     if not self:isActive() then
-        if self._fx > 3 or self._fy > 3 then
-            self._fx = self._fx * 8 / 10
-            self._fy = self._fy * 8 / 10
-            self._spJoys:setPosition(cc.p(self._fx + 75,self._fy + 75))
-        else
-            self._fx = 0
-            self._fy = 0
-            self._spJoys:setPosition(cc.p(self._fx + 75,self._fy + 75))
-        end
+        self._spJoys:setPosition(cc.p(self._radius_bg._w,self._radius_bg._h))
     end
-    ]]
 end
 
 function JoyStickObj:isActive()
@@ -96,19 +86,20 @@ function JoyStickObj:GetDir360(ptMove)
     if not ptMove then return end
 	return CalUtil.CalcDirection(self._ptHold.x,self._ptHold.y,ptMove.x,ptMove.y,360)
 end
-
+--[[线性四方向]]
 function JoyStickObj:GetDirLean4(ptMove)
     if not ptMove then return end
 	return CalUtil.CalcDirection(self._ptHold.x,self._ptHold.y,ptMove.x,ptMove.y,4)
 end
-
+--[[偏左四方向]]
 function JoyStickObj:GetDir4(ptMove)
     if not ptMove then return end
 	return CalUtil.CalcDirection(self._ptHold.x,self._ptHold.y,ptMove.x,ptMove.y,2)
 end
-
+--[[八方向]]
 function JoyStickObj:GetDir8(ptMove)
     if not ptMove then return end
 	return CalUtil.CalcDirection(self._ptHold.x,self._ptHold.y,ptMove.x,ptMove.y,nil)
 end
+
 return JoyStickObj

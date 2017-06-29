@@ -5,6 +5,7 @@ local GameData = require("app.utils.GameData")
 function TouchLayer:ctor()
     self._spRotate = nil
     self._joyStick = nil
+    self._drawLayer = nil
     self._touchListener = nil
     self._gameData = GameData:create()
     self:initUI()
@@ -12,10 +13,14 @@ function TouchLayer:ctor()
 end
 
 function TouchLayer:initUI()
-    self._spRotate = display.newSprite("navstick.png")
+    --self._spRotate = display.newSprite("navstick.png")
+    self._spRotate = require("app.views.MoveObj").new("navstick.png")
     self._spRotate:move(cc.p(500,300))
-    self._spRotate:addTo(self)
-    self._spRotate:setScale(5.0)
+    self._spRotate:addTo(self,1)
+
+    self._drawLayer = require("app.views.DrawLayer"):create()
+    self:addChild(self._drawLayer)
+    self._drawLayer:setMoveObj(self._spRotate)
 
     self._joyStick = require("app.views.JoyStickObj"):create()
     if self._joyStick then
@@ -23,19 +28,27 @@ function TouchLayer:initUI()
         self._joyStick:setPosition(cc.p(140,200))
     end
 
---   self:scheduleUpdateWithPriorityLua(function(dt)
---        self:schedule(dt)
---   end,0)
-
    self._scheduleId = CCDirector:getInstance():getScheduler():scheduleScriptFunc(function(dt)
         self:schedule(dt)
    end, 0, false)
 end
 
 function TouchLayer:schedule(dt)
-    print("schedule " .. dt)
-    self._gameData:Updata(dt)
+    --print("schedule " .. dt)
+    self._gameData:Update(dt)
+    self._gameData:ToughChgDir(self._joyStick:GetCommand())
+   -- self._spRotate:Update()
     self:refrishUI()
+    local pos = self._joyStick:GetCommand()
+    --self._spRotate:setMoving( not pos.x == 0 and pos.y == 0)
+    if pos.x == 0 and pos.y == 0 then
+        self._spRotate:setMoving(false)
+       -- print("stop")
+    else
+        self._spRotate:setMoving(true)
+       -- print("move")
+    end
+    self._drawLayer:Update()
 end
 
 
@@ -84,23 +97,18 @@ function TouchLayer:initTouchEvent()
 
         local rot = self._joyStick:GetDir360(ptT)
         print("rot--->  " ..rot)
-        self._spRotate:setRotation(-rot)
-       -- self._gameData:ToughChgDir(rot)
+        self._spRotate:setObjRotation(-rot)
     end
 
     local function onTouchEnded(touch, event)
         self._joyStick:TouchEnd()
         local ptT = touch:getLocation()
-
         local rot = self._joyStick:GetDir360(ptT)
         print("end->rot--->  " ..rot)
-        --self._spRotate:setRotation(-rot)
-        print("tou.h end ")
     end
 
     local function onTouchCanceled(touch, event)
         self._joyStick:TouchEnd()
-        print("touch cancel ")
     end
 
     self._touchListener = cc.EventListenerTouchOneByOne:create()  
@@ -112,7 +120,5 @@ function TouchLayer:initTouchEvent()
     eventDispatcher:addEventListenerWithSceneGraphPriority(self._touchListener, self)  
 
 end
-
-
 
 return TouchLayer
