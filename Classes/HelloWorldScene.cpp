@@ -1,6 +1,7 @@
 ﻿#include "HelloWorldScene.h"
 #include "Shader/EasyEffect.h"
 #include "Utils/CommonFunction.h"
+#include "Shader/Water.h"
 
 HelloWorld::HelloWorld()
 {
@@ -59,6 +60,11 @@ bool HelloWorld::init()
 	runNumber_1->setAnchorPoint(Vec2(0, 0.5));
 	runNumber_1->setPosition(CommonFunction::getVisibleAchor(0.5, 0.5, Vec2(0, 0)));
 	addChild(runNumber_1);*/
+
+	//Water test
+	auto water = Water::create("shader3D/water.png", "shader3D/wave1.jpg", "shader3D/wave1.jpg", Size(512, 512), 10.f, 10.f, 10.f);
+	addChild(water);
+	water->setPosition(Vec2(visibleSize.width / 2, visibleSize.height / 2));
     return true;
 }
 
