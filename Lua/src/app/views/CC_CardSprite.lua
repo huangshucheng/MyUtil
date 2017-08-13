@@ -10,7 +10,7 @@ function CC_CardSprite:ctor()
 
 	self.m_horiSpaceFactor = 1.0		--水平空间距离因子
 	self.m_vertSpaceFactor = 1.0		--垂直空间距离因子
-	self.m_horiFixedSpace  = 0          --
+	self.m_horiFixedSpace  = 0          --水平拓展空间
 
 	self.m_horiIndex        = 0                --水平下标
 	self.m_vertIndex        = 0                --垂直下标
