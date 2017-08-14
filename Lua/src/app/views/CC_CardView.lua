@@ -51,7 +51,7 @@ function CC_CardView:onMemberAssigned()
     self.m_beginTouchCardIndex = -1         --开始点击下标
     self.m_endTouchCardIndex = -1           --结束点击下标
 
-    self.m_touchExpandCount = 5             --默认拓展数量
+    self.m_touchExpandCount = 2             --默认拓展数量
     self.m_shootAltitude = 30               --弹起高度
 
     self.m_cardViewCallback = nil           --点击回调
@@ -156,12 +156,13 @@ function CC_CardView:setCardSize(size)
     self.m_maxHoriSpace = self.m_cardSize.width * 3 / 5
     self.m_minVertSpace = self.m_cardSize.height / 5
     self.m_maxVertSpace = self.m_cardSize.height / 2 
-    self.m_expandHoriSpace = self.m_cardSize.width * 0.15
+    self.m_expandHoriSpace = self.m_cardSize.width * 0.10
     self:updateCardMetrics()
 end
 --[[
 调整所有牌的位置
 ]]
+--[[
 function CC_CardView:updateCardMetrics()
     local child_tb = self:getAllCardSprites()
     if table.nums(child_tb) == 0 then return end
@@ -217,8 +218,72 @@ function CC_CardView:updateCardMetrics()
             if rowWidth_tb[vd + 1] then x = - rowWidth_tb[vd + 1] * anchorPoint.x end
             vertIndex = child_tb[idx]:getVertIndex()
             if vertIndex > 0 then y = y - child_tb[idx]:getVertRealSpace() end
+
+            printInfo("vertIndex: " .. vd)
+            printInfo("rowWidth index: " .. rowWidth_tb[vd + 1])
         end
         if child_tb[idx]:getHoriIndex() ~= 0 then x = x + child_tb[idx]:getHoriRealSpace() end
+        child_tb[idx]:setNormalPos(cc.p(x,y))
+    end
+end
+]]
+function CC_CardView:updateCardMetrics()
+    local child_tb = self:getAllCardSprites()
+    if table.nums(child_tb) == 0 then return end
+
+	local horiFixedSpace = self:calcAllCardSpriteHoriFixedSpace()
+	local horiSpaceFactor = self:calcAllCardSpriteHoriSpaceFactor()
+    local anchorPoint = self:getAnchorPoint()
+    local maxRow = 1
+
+    if self.m_maxHeight ~= 0 and self.m_minVertSpace ~= 0 then 
+         maxRow = math.ceil(self.m_maxHeight / self.m_minVertSpace)
+    else 
+        maxRow = 1 
+    end
+
+    if horiSpaceFactor ~= 0 then
+        self.m_currentHoriSpace = (self.m_maxWidth * maxRow - horiFixedSpace) / horiSpaceFactor
+    else
+        self.m_currentHoriSpace = self.m_maxWidth * maxRow - horiFixedSpace 
+    end
+
+    self.m_currentVertSpace = self.m_maxHeight / maxRow
+    self.m_currentHoriSpace = math.min(self.m_currentHoriSpace,self.m_maxHoriSpace)
+    self.m_currentHoriSpace = math.max(self.m_currentHoriSpace,self.m_minHoriSpace)
+    self.m_currentVertSpace = math.min(self.m_currentVertSpace,self.m_maxVertSpace)
+    self.m_currentVertSpace = math.max(self.m_currentVertSpace,self.m_minVertSpace)
+
+    local rowWidth_tb = {}
+    local width , height = 0 , 0
+    local horiIndex , vertIndex = 1 , 1
+
+    for idx = 1 , table.nums(child_tb) do 
+        if (width + child_tb[idx]:getHoriRealSpace()) > self.m_maxWidth + 0.1 then
+            vertIndex = vertIndex + 1
+            horiIndex = 1
+            table.insert(rowWidth_tb ,width)
+            width = 0
+            height = height + child_tb[idx]:getVertRealSpace()
+        end
+        child_tb[idx]:setDimensionIndex(horiIndex,vertIndex)
+        if horiIndex >1 then width = width + child_tb[idx]:getHoriRealSpace() end
+        horiIndex = horiIndex + 1
+    end
+
+    table.insert(rowWidth_tb,width)
+    local x = 0
+    local y = height * anchorPoint.y
+    vertIndex = -1
+
+    for idx = 1 , table.nums(child_tb) do 
+        if child_tb[idx]:getVertIndex() ~= vertIndex then
+            local vd = child_tb[idx]:getVertIndex()
+            if rowWidth_tb[vd] then x = - rowWidth_tb[vd] * anchorPoint.x end
+            vertIndex = child_tb[idx]:getVertIndex()
+            if vertIndex > 1 then y = y - child_tb[idx]:getVertRealSpace() end
+        end
+        if child_tb[idx]:getHoriIndex() > 1 then x = x + child_tb[idx]:getHoriRealSpace() end
         child_tb[idx]:setNormalPos(cc.p(x,y))
     end
 end
@@ -324,7 +389,7 @@ function CC_CardView:onTouchesEnded(touches, event)
         if self.m_beginTouchCardIndex == self.m_endTouchCardIndex then
             local cardSprite = self:getCardSprite(self.m_beginTouchCardIndex)
             if not cardSprite:isExpanded() then
-                --self:expandCards(self.m_beginTouchCardIndex,self.m_touchExpandCount)
+                self:expandCards(self.m_beginTouchCardIndex,self.m_touchExpandCount)
             end
         end
         self:flipCardsShoot(self.m_beginTouchCardIndex,self.m_endTouchCardIndex)

@@ -187,8 +187,8 @@ function CC_CardSprite:setDestPos(pos)
     self.m_destPos = pos
     self:stopAllActions()
     if self.m_cc_cardView and self.m_cc_cardView:isMoveAnimationEnabled() then
-        --local ease_move = cc.EaseExponentialOut:create(cc.MoveTo:create(0.2,pos))
-        local ease_move = cc.EaseQuarticActionOut:create(cc.MoveTo:create(0.2,pos))
+        local ease_move = cc.EaseExponentialOut:create(cc.MoveTo:create(0.2,pos))
+        --local ease_move = cc.EaseQuarticActionOut:create(cc.MoveTo:create(0.2,pos))
         self:runAction(ease_move)
     else
         self:setPosition(pos)
