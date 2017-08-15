@@ -221,7 +221,6 @@ function CC_CardSprite:updateSpriteFrame()
     if frame then
         frame:getTexture():setAntiAliasTexParameters()
 	    self:setSpriteFrame(frame)
-        --printInfo("CC_CardSprite:updateSpriteFrame->file<" .. fileStr .. ">")
     end
 end
 

@@ -46,15 +46,17 @@ function CC_CardView:onMemberAssigned()
 
     self.m_moveAnimationEnabled = true      --是否有移动动画
     self.m_autoShootDown = true             --点其他地方牌自动非选中
+    self.m_singleTopMode = false            --是否每次只能选中一张
 
     self.m_touchBeganPoint = cc.p(-1,-1)    --开始点击点
     self.m_beginTouchCardIndex = -1         --开始点击下标
     self.m_endTouchCardIndex = -1           --结束点击下标
 
-    self.m_touchExpandCount = 2             --默认拓展数量
+    self.m_touchExpandCount = 5             --默认拓展数量
     self.m_shootAltitude = 30               --弹起高度
 
     self.m_cardViewCallback = nil           --点击回调
+    
 end
 --[[
 创建
@@ -154,34 +156,35 @@ function CC_CardView:setCardSize(size)
     self.m_cardSize = size
     self.m_minHoriSpace = self.m_cardSize.width / 5
     self.m_maxHoriSpace = self.m_cardSize.width * 3 / 5
-    self.m_minVertSpace = self.m_cardSize.height / 5
-    self.m_maxVertSpace = self.m_cardSize.height / 2 
-    self.m_expandHoriSpace = self.m_cardSize.width * 0.10
+    self.m_minVertSpace = self.m_cardSize.height / 3
+    self.m_maxVertSpace = self.m_cardSize.height  / 2 
+    self.m_expandHoriSpace = self.m_cardSize.width * 0.15
     self:updateCardMetrics()
+
+    printInfo("m_minHoriSpace: " .. self.m_minHoriSpace)
+    printInfo("m_maxHoriSpace: " .. self.m_maxHoriSpace)
+    printInfo("m_minVertSpace: " .. self.m_minVertSpace)
+    printInfo("m_maxVertSpace: " .. self.m_maxVertSpace)
+    printInfo("m_expandHoriSpace: " .. self.m_expandHoriSpace) 
 end
 --[[
 调整所有牌的位置
 ]]
---[[
 function CC_CardView:updateCardMetrics()
     local child_tb = self:getAllCardSprites()
     if table.nums(child_tb) == 0 then return end
 
 	local horiFixedSpace = self:calcAllCardSpriteHoriFixedSpace()
 	local horiSpaceFactor = self:calcAllCardSpriteHoriSpaceFactor()
-    local anchorPoint = self:getAnchorPoint()
     local maxRow = 1
 
     if self.m_maxHeight ~= 0 and self.m_minVertSpace ~= 0 then 
-         maxRow = math.ceil(self.m_maxHeight / self.m_minVertSpace)
-    else 
-        maxRow = 1 
+         maxRow = math.ceil(self.m_maxHeight / self.m_minVertSpace) 
     end
 
+    self.m_currentHoriSpace = self.m_maxWidth * maxRow - horiFixedSpace
     if horiSpaceFactor ~= 0 then
-        self.m_currentHoriSpace = (self.m_maxWidth * maxRow - horiFixedSpace) / horiSpaceFactor
-    else
-        self.m_currentHoriSpace = self.m_maxWidth * maxRow - horiFixedSpace 
+        self.m_currentHoriSpace = self.m_currentHoriSpace / horiSpaceFactor
     end
 
     self.m_currentVertSpace = self.m_maxHeight / maxRow
@@ -190,101 +193,45 @@ function CC_CardView:updateCardMetrics()
     self.m_currentVertSpace = math.min(self.m_currentVertSpace,self.m_maxVertSpace)
     self.m_currentVertSpace = math.max(self.m_currentVertSpace,self.m_minVertSpace)
 
-    local rowWidth_tb = {}
+    local row_width_tb = {}
     local width , height = 0 , 0
     local horiIndex , vertIndex = 0 , 0
 
-    for idx = 1 , table.nums(child_tb) do 
-        if (width + child_tb[idx]:getHoriRealSpace()) > self.m_maxWidth + 0.1 then
+    for _ ,child_sp in pairs(child_tb) do
+        if (width + child_sp:getHoriRealSpace()) > self.m_maxWidth then
             vertIndex = vertIndex + 1
             horiIndex = 0
-            table.insert(rowWidth_tb ,width)
+            table.insert(row_width_tb,width)
             width = 0
-            height = height + child_tb[idx]:getVertRealSpace()
+            height = height + child_sp:getVertRealSpace()
         end
-        child_tb[idx]:setDimensionIndex(horiIndex,vertIndex)
-        if horiIndex ~= 0 then width = width + child_tb[idx]:getHoriRealSpace() end
+        child_sp:setDimensionIndex(horiIndex,vertIndex)
+        if horiIndex ~= 0 then 
+            width = width + child_sp:getHoriRealSpace() 
+        end
         horiIndex = horiIndex + 1
     end
 
-    table.insert(rowWidth_tb,width)
-    local x = 0
-    local y = height * anchorPoint.y
-    vertIndex = -1
-
-    for idx = 1 , table.nums(child_tb) do 
-        if child_tb[idx]:getVertIndex() ~= vertIndex then
-            local vd = child_tb[idx]:getVertIndex()
-            if rowWidth_tb[vd + 1] then x = - rowWidth_tb[vd + 1] * anchorPoint.x end
-            vertIndex = child_tb[idx]:getVertIndex()
-            if vertIndex > 0 then y = y - child_tb[idx]:getVertRealSpace() end
-
-            printInfo("vertIndex: " .. vd)
-            printInfo("rowWidth index: " .. rowWidth_tb[vd + 1])
-        end
-        if child_tb[idx]:getHoriIndex() ~= 0 then x = x + child_tb[idx]:getHoriRealSpace() end
-        child_tb[idx]:setNormalPos(cc.p(x,y))
-    end
-end
-]]
-function CC_CardView:updateCardMetrics()
-    local child_tb = self:getAllCardSprites()
-    if table.nums(child_tb) == 0 then return end
-
-	local horiFixedSpace = self:calcAllCardSpriteHoriFixedSpace()
-	local horiSpaceFactor = self:calcAllCardSpriteHoriSpaceFactor()
+    table.insert(row_width_tb,width)
     local anchorPoint = self:getAnchorPoint()
-    local maxRow = 1
-
-    if self.m_maxHeight ~= 0 and self.m_minVertSpace ~= 0 then 
-         maxRow = math.ceil(self.m_maxHeight / self.m_minVertSpace)
-    else 
-        maxRow = 1 
-    end
-
-    if horiSpaceFactor ~= 0 then
-        self.m_currentHoriSpace = (self.m_maxWidth * maxRow - horiFixedSpace) / horiSpaceFactor
-    else
-        self.m_currentHoriSpace = self.m_maxWidth * maxRow - horiFixedSpace 
-    end
-
-    self.m_currentVertSpace = self.m_maxHeight / maxRow
-    self.m_currentHoriSpace = math.min(self.m_currentHoriSpace,self.m_maxHoriSpace)
-    self.m_currentHoriSpace = math.max(self.m_currentHoriSpace,self.m_minHoriSpace)
-    self.m_currentVertSpace = math.min(self.m_currentVertSpace,self.m_maxVertSpace)
-    self.m_currentVertSpace = math.max(self.m_currentVertSpace,self.m_minVertSpace)
-
-    local rowWidth_tb = {}
-    local width , height = 0 , 0
-    local horiIndex , vertIndex = 1 , 1
-
-    for idx = 1 , table.nums(child_tb) do 
-        if (width + child_tb[idx]:getHoriRealSpace()) > self.m_maxWidth + 0.1 then
-            vertIndex = vertIndex + 1
-            horiIndex = 1
-            table.insert(rowWidth_tb ,width)
-            width = 0
-            height = height + child_tb[idx]:getVertRealSpace()
-        end
-        child_tb[idx]:setDimensionIndex(horiIndex,vertIndex)
-        if horiIndex >1 then width = width + child_tb[idx]:getHoriRealSpace() end
-        horiIndex = horiIndex + 1
-    end
-
-    table.insert(rowWidth_tb,width)
     local x = 0
     local y = height * anchorPoint.y
     vertIndex = -1
-
-    for idx = 1 , table.nums(child_tb) do 
-        if child_tb[idx]:getVertIndex() ~= vertIndex then
-            local vd = child_tb[idx]:getVertIndex()
-            if rowWidth_tb[vd] then x = - rowWidth_tb[vd] * anchorPoint.x end
-            vertIndex = child_tb[idx]:getVertIndex()
-            if vertIndex > 1 then y = y - child_tb[idx]:getVertRealSpace() end
+    for _ ,child_sp in pairs(child_tb) do
+        if child_sp:getVertIndex() ~= vertIndex then
+            local vd = child_sp:getVertIndex()
+            if row_width_tb[vd + 1] then
+                x = - row_width_tb[vd + 1] * anchorPoint.x 
+            end
+            vertIndex = child_sp:getVertIndex()
+            if vertIndex > 0 then
+                y = y - child_sp:getVertRealSpace() 
+            end
         end
-        if child_tb[idx]:getHoriIndex() > 1 then x = x + child_tb[idx]:getHoriRealSpace() end
-        child_tb[idx]:setNormalPos(cc.p(x,y))
+        if child_sp:getHoriIndex() ~= 0 then 
+            x = x + child_sp:getHoriRealSpace() 
+        end
+        child_sp:setNormalPos(cc.p(x,y))
     end
 end
 --[[
@@ -350,27 +297,27 @@ end
 开始触摸屏幕事件
 ]]
 function CC_CardView:onTouchesBegan(touches, event)
-    printInfo("onTouchesBegan")
-    if table.nums(touches) == 1 and touches[1] then
-        local touch = touches[1]
-        self.m_touchBeganPoint = self:convertToNodeSpace(touch:getLocation())
-        self.m_beginTouchCardIndex = self:getHitCardIndexForPos(self.m_touchBeganPoint)
-        printInfo("m_beginTouchCardIndex: " .. self.m_beginTouchCardIndex)
-    end
+    local touches_size = table.nums(touches)
+    if touches_size <= 0 then return end
+    local touch = touches[touches_size]
+    self.m_touchBeganPoint = self:convertToNodeSpace(touch:getLocation())
+    self.m_beginTouchCardIndex = self:getHitCardIndexForPos(self.m_touchBeganPoint)
+    printInfo("m_beginTouchCardIndex---------------> " .. self.m_beginTouchCardIndex)
 end
 --[[
 触摸移动事件
 ]]
 function CC_CardView:onTouchesMoved(touches, event)
-    if table.nums(touches) == 1 and touches[1] and self.m_beginTouchCardIndex ~= -1 then
-        local touch = touches[1]
+    local touches_size = table.nums(touches)
+    if touches_size <= 0 then return end
+    local touch = touches[touches_size]
+    if self.m_beginTouchCardIndex ~= -1 then
         local touchPoint = self:convertToNodeSpace(touch:getLocation())
         local cardIndex = self:getHitCardIndexForPos(touchPoint)
         if cardIndex ~= -1 then
             self:setCardsSelect(self.m_beginTouchCardIndex,self.m_endTouchCardIndex,false)
             self.m_endTouchCardIndex = cardIndex
             self:setCardsSelect(self.m_beginTouchCardIndex,self.m_endTouchCardIndex,true)
-            printInfo("m_endTouchCardIndex: " .. self.m_endTouchCardIndex)
         end
     end
 end
@@ -378,33 +325,36 @@ end
 触摸结束事件
 ]]
 function CC_CardView:onTouchesEnded(touches, event)
-    printInfo("onTouchesEnded")
-    if table.nums(touches) ~= 1 or not touches[1] then return end
-    local touch = touches[1]
+    local touches_size = table.nums(touches)
+    if touches_size <= 0 then return end
+    local touch = touches[touches_size]
     local touchPoint = self:convertToNodeSpace(touch:getLocation())
     self.m_endTouchCardIndex = self:getHitCardIndexForPos(touchPoint)
     self:setCardsSelect(1,self:getCardCount() ,false)
-
     if self.m_beginTouchCardIndex ~= -1 and self.m_endTouchCardIndex ~= -1 then
-        if self.m_beginTouchCardIndex == self.m_endTouchCardIndex then
-            local cardSprite = self:getCardSprite(self.m_beginTouchCardIndex)
-            if not cardSprite:isExpanded() then
-                self:expandCards(self.m_beginTouchCardIndex,self.m_touchExpandCount)
+    --[[  TODO  只选中一张
+        if self.m_singleTopMode then
+            if self.m_beginTouchCardIndex == self.m_endTouchCardIndex then
+                self:flipCardsShoot(self.m_beginTouchCardIndex,self.m_endTouchCardIndex)
             end
+            local shoot_sp = self:getShootedCardsSpriteByOrder()
+            local count = table.nums(shoot_sp)
+            printInfo("shoot count:" .. count)
+            if count == 2 then
+                shoot_sp[count]:setShooted(false)
+            end
+        else
+            self:flipCardsShoot(self.m_beginTouchCardIndex,self.m_endTouchCardIndex)
         end
+        ]]
         self:flipCardsShoot(self.m_beginTouchCardIndex,self.m_endTouchCardIndex)
         self:dispatchCardShootChangedEvent(CC_CardView.EventType.EVENT_HIT_CARD)
     else
-        if self.m_autoShootDown then
-            self:setAllCardsShoot(false)
-            if (self.m_touchBeganPoint.x -touchPoint.x) < -100 or (self.m_touchBeganPoint.x -touchPoint.x) > 100  then
-                self:adjustAllCardSpriteSpace()
-            end
-        end
+        if self.m_autoShootDown then self:setAllCardsShoot(false) end
         self:dispatchCardShootChangedEvent(CC_CardView.EventType.EVENT_NOT_HIT)
     end
 
-    printInfo("m_endTouchCardIndex: " .. self.m_endTouchCardIndex)
+    printInfo("m_endTouchCardIndex-----------------> " .. self.m_endTouchCardIndex .. "\n\n")
     self.m_beginTouchCardIndex = -1
     self.m_endTouchCardIndex = -1
     self.m_touchBeganPoint = cc.p(0,0)
@@ -674,6 +624,15 @@ function CC_CardView:setMoveAnimationEnable(enable)
     if type(enable) ~= 'boolean' then return end
     self.m_moveAnimationEnabled = enable
 end
+
+function CC_CardView:isSingleTopMode()
+    return self.m_singleTopMode
+end
+
+function CC_CardView:setSingleTopMode(enable)
+    if type(enable) ~= 'boolean' then return end
+    self.m_singleTopMode = enable
+end
 -----------------------------------------------get or set->end
 
 -----------------------------------------------操做牌->start
@@ -924,11 +883,11 @@ function CC_CardView:setCardShoot(card,shoot)
         for _ ,card_sp in pairs(card_tb) do
             if card_sp:isShooted() ~= shoot then
                 card_sp:setShooted(shoot)
-                self:updateCardMetrics()
                 break
             end
         end
     end
+    self:updateCardMetrics()
 end
 --[[
 设置牌是否选中
@@ -943,11 +902,11 @@ function CC_CardView:setCardsShootByCardTable(cards,shoot)
         for _ , card_sp in pairs(child_tb) do
             if card_sp:getCard() == card and card_sp:isShooted() ~= shoot then
                 card_sp:setShooted(shoot)
-                self:updateCardMetrics()
                 break
             end
         end
     end
+    self:updateCardMetrics()
 end
 --[[
 是否选中
@@ -1018,14 +977,26 @@ end
 返回值：所有选中牌的值
 ]]
 function CC_CardView:getShootedCardsByOrder()
-    local shoot_sp_tb = self:getAllShootedCaredSprite()
+    local cards_sp_tb = self:getShootedCardsSpriteByOrder()
+    local cards_tb = {}
+    for _ , card in pairs(cards_sp_tb) do
+        table.insert(cards_tb,card)
+    end
+    return cards_tb
+end
+--[[
+根据选中顺序获取选中牌(最后选中的牌排在最后)
+返回值：选中牌节点
+]]
+function CC_CardView:getShootedCardsSpriteByOrder()
+   local shoot_sp_tb = self:getAllShootedCaredSprite()
     local card_tb = {}
     local function compare(cdSp_A,cdSp_B)
         return cdSp_A:getShootedOrder() < cdSp_B:getShootedOrder()
     end
     table.sort(shoot_sp_tb,compare)
     for _ , card_sp in pairs(shoot_sp_tb) do
-        table.insert(card_tb,card_sp:getCard())
+        table.insert(card_tb,card_sp)
     end
     return card_tb
 end
