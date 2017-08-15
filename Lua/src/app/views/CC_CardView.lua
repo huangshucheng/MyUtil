@@ -332,21 +332,6 @@ function CC_CardView:onTouchesEnded(touches, event)
     self.m_endTouchCardIndex = self:getHitCardIndexForPos(touchPoint)
     self:setCardsSelect(1,self:getCardCount() ,false)
     if self.m_beginTouchCardIndex ~= -1 and self.m_endTouchCardIndex ~= -1 then
-    --[[  TODO  只选中一张
-        if self.m_singleTopMode then
-            if self.m_beginTouchCardIndex == self.m_endTouchCardIndex then
-                self:flipCardsShoot(self.m_beginTouchCardIndex,self.m_endTouchCardIndex)
-            end
-            local shoot_sp = self:getShootedCardsSpriteByOrder()
-            local count = table.nums(shoot_sp)
-            printInfo("shoot count:" .. count)
-            if count == 2 then
-                shoot_sp[count]:setShooted(false)
-            end
-        else
-            self:flipCardsShoot(self.m_beginTouchCardIndex,self.m_endTouchCardIndex)
-        end
-        ]]
         self:flipCardsShoot(self.m_beginTouchCardIndex,self.m_endTouchCardIndex)
         self:dispatchCardShootChangedEvent(CC_CardView.EventType.EVENT_HIT_CARD)
     else
