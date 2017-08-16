@@ -34,27 +34,12 @@ function GameScene:addUI()
     end
 
     self.cardView:addCardViewEventListener(function(sender,eventType)
-        local shootedSp = self.cardView:getShootedCardsSpriteByOrder()
-        local count = table.nums(shootedSp)
-        if count > 1 then
-            self.cardView:setAllCardsShoot(false)
-            shootedSp[count]:setShooted(true)
-        end
-
     if eventType == self.cardView.EventType.EVENT_HIT_CARD then
-        printInfo("hit card")
+        --printInfo("hit card")
     else
-        printInfo("not hit card")
+        --printInfo("not hit card")
     end
     end)
-    --[[
-    local width = display.width - 50
-    local curSpace = width * 2 / self.cardView:getCardCount()
-    self.cardView:setMinHoriSpace(curSpace)
-    self.cardView:setMaxHoriSpace(curSpace);
-	self.cardView:setMinVertSpace(self.cardView:getCardSize().height * 3 / 4)
-	self.cardView:setMaxVertSpace(self.cardView:getCardSize().height)
-    ]]
 end
 
 function GameScene:addButton()
@@ -66,7 +51,11 @@ function GameScene:addButton()
     btn_0:addTo(self)
     btn_0:addClickEventListener(function(sender)
         printInfo("hcc fuck---->0----->click \n\n")
-        self.cardView:setCards(Card_1)
+        ---self.cardView:setCards(Card_1)
+        --self.cardView:ignoreAnchorPointForPosition(false)
+        --local anchp = self.cardView:getAnchorPoint()
+        self.cardView:setCardViewScale(0.5)
+        --printInfo("x:   " .. anchp.x .. "   y:  " .. anchp.y)
     end)
 
     local btn_1 = ccui.Button:create("BT_YAOGAN.png")
@@ -74,7 +63,8 @@ function GameScene:addButton()
     btn_1:addTo(self)
     btn_1:addClickEventListener(function(sender)
         printInfo("hcc fuck---->1----->click \n\n")
-        self.cardView:setCards(Card_2)
+        --self.cardView:setCards(Card_2)
+        self.cardView:setCardViewScale(1.0)
     end)
 
     local btn_2 = ccui.Button:create("BT_YAOGAN.png")

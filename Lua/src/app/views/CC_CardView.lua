@@ -1,6 +1,6 @@
 local CC_CardView = class("CC_CardView",cc.Layer)
 
-local CC_CardSprite = require("app.views.CC_CardSprite")
+local CC_CardSprite = import("app/views/CC_CardSprite")
 
 CC_CardView.EventType = 
 {
@@ -9,8 +9,6 @@ CC_CardView.EventType =
 }
 
 function CC_CardView:ctor()
-    printInfo("CC_CardView:ctor")
-
     local function onNodeEvent(event)
         if event == "enter" then
             self:onEnter()
@@ -20,7 +18,6 @@ function CC_CardView:ctor()
     end
     self:registerScriptHandler(onNodeEvent)
     self:onMemberAssigned()
-    self:setCardSize(cc.size(120,159))
 end
 
 function CC_CardView:onMemberAssigned()
@@ -46,7 +43,7 @@ function CC_CardView:onMemberAssigned()
 
     self.m_moveAnimationEnabled = true      --是否有移动动画
     self.m_autoShootDown = true             --点其他地方牌自动非选中
-    self.m_singleTopMode = false            --是否每次只能选中一张
+    self.m_singleTopMode = false            --是否单点触摸模式
 
     self.m_touchBeganPoint = cc.p(-1,-1)    --开始点击点
     self.m_beginTouchCardIndex = -1         --开始点击下标
@@ -56,7 +53,6 @@ function CC_CardView:onMemberAssigned()
     self.m_shootAltitude = 30               --弹起高度
 
     self.m_cardViewCallback = nil           --点击回调
-    
 end
 --[[
 创建
@@ -83,6 +79,7 @@ function CC_CardView:initWithFile(cardImageFileName)
     if self.m_cardRootNode then
         self.m_cardRootNode:getTexture():setAliasTexParameters()--抗锯齿
 	    self.m_cardRootNode:addTo(self)
+        self.m_cardRootNode:setAnchorPoint(cc.p(0.5,0.5))
     end
 end
 --[[
@@ -99,7 +96,6 @@ function CC_CardView:setCardImageFile(cardImageFileName)
     local cardSp = self:createCardSprite(0x00)
     if cardSp then
         self:setCardSize(cardSp:getContentSize())
-        printInfo("cardSpSize-> w:" .. cardSp:getContentSize().width .. ' ,h:' .. cardSp:getContentSize().height)
     end
     cardSp = nil
     --printInfo("CC_CardView->setCardImageFile-> m_cardImgFile: " .. self.m_cardImageFilePrefix)
@@ -133,7 +129,7 @@ function CC_CardView:setCards(cards)
             if card_sp then
                 card_sp:addTo(self.m_cardRootNode,i)
                 card_sp:setLocalZOrder(i)
-                printInfo("CC_CardView->addCard index: " .. i)
+                --printInfo("CC_CardView->addCard index: " .. i)
             end
         end
     end
@@ -141,7 +137,7 @@ function CC_CardView:setCards(cards)
     if table.nums(child_tb) > table.nums(cards) then
         for j = table.nums(child_tb) , table.nums(cards) + 1 , -1 do
             self.m_cardRootNode:removeChild(child_tb[j],true)
-            printInfo("CC_CardView->remove index: " .. j)
+            --printInfo("CC_CardView->remove index: " .. j)
         end
     end
     
@@ -149,7 +145,7 @@ function CC_CardView:setCards(cards)
     self:updateCardMetrics()
 end
 --[[
-设置单张牌size
+设置单张牌参数
 ]]
 function CC_CardView:setCardSize(size)
     if type(size) ~= 'table' then return end
@@ -160,12 +156,12 @@ function CC_CardView:setCardSize(size)
     self.m_maxVertSpace = self.m_cardSize.height  / 2 
     self.m_expandHoriSpace = self.m_cardSize.width * 0.15
     self:updateCardMetrics()
-
-    printInfo("m_minHoriSpace: " .. self.m_minHoriSpace)
-    printInfo("m_maxHoriSpace: " .. self.m_maxHoriSpace)
-    printInfo("m_minVertSpace: " .. self.m_minVertSpace)
-    printInfo("m_maxVertSpace: " .. self.m_maxVertSpace)
-    printInfo("m_expandHoriSpace: " .. self.m_expandHoriSpace) 
+    
+    printInfo("CC_CardView->m_minHoriSpace: " .. self.m_minHoriSpace)
+    printInfo("CC_CardView->m_maxHoriSpace: " .. self.m_maxHoriSpace)
+    printInfo("CC_CardView->m_minVertSpace: " .. self.m_minVertSpace)
+    printInfo("CC_CardView->m_maxVertSpace: " .. self.m_maxVertSpace)
+    printInfo("CC_CardView->m_expandHoriSpace: " .. self.m_expandHoriSpace) 
 end
 --[[
 调整所有牌的位置
@@ -334,6 +330,17 @@ function CC_CardView:onTouchesEnded(touches, event)
     if self.m_beginTouchCardIndex ~= -1 and self.m_endTouchCardIndex ~= -1 then
         self:flipCardsShoot(self.m_beginTouchCardIndex,self.m_endTouchCardIndex)
         self:dispatchCardShootChangedEvent(CC_CardView.EventType.EVENT_HIT_CARD)
+        if self.m_singleTopMode then
+            local last_sp = self:getLastShootedCardSprite()
+            if last_sp then
+                local all_cards = self:getAllShootedCaredSprite()
+                local not_last = {}
+                for _ ,v in pairs(all_cards)do
+                    if v ~= last_sp then table.insert(not_last,v) end
+                end
+                self:setCardsShootByCardSpriteTable(not_last,false)
+            end
+        end
     else
         if self.m_autoShootDown then self:setAllCardsShoot(false) end
         self:dispatchCardShootChangedEvent(CC_CardView.EventType.EVENT_NOT_HIT)
@@ -894,6 +901,20 @@ function CC_CardView:setCardsShootByCardTable(cards,shoot)
     self:updateCardMetrics()
 end
 --[[
+根据牌节点，设置是否选中
+cardsSprite:牌节点table
+shoot:是否选中
+]]
+function CC_CardView:setCardsShootByCardSpriteTable(cardSprites,shoot)
+    if type(cardSprites) ~= 'table' or type(shoot) ~= 'boolean' then return end
+    if table.nums(cardSprites) == 0 then return end
+    for _ , sp in pairs(cardSprites) do 
+        sp:setShooted(shoot)
+    end
+    self:updateCardMetrics()
+end
+
+--[[
 是否选中
 index:下标
 ]]
@@ -921,6 +942,34 @@ function CC_CardView:getAllShootedCaredSprite()
     return shoot_sp_tb
 end
 --[[
+根据选中顺序获取选中牌(最后选中的牌排在最后)
+返回值：选中牌节点
+]]
+function CC_CardView:getShootedCardsSpriteByOrder()
+   local shoot_sp_tb = self:getAllShootedCaredSprite()
+    local card_tb = {}
+    local function compare(cdSp_A,cdSp_B)
+        return cdSp_A:getShootedOrder() < cdSp_B:getShootedOrder()
+    end
+    table.sort(shoot_sp_tb,compare)
+    for _ , card_sp in pairs(shoot_sp_tb) do
+        table.insert(card_tb,card_sp)
+    end
+    return card_tb
+end
+--[[
+获取第一张选中牌节点
+]]
+function CC_CardView:getFirstShootedCardSprite()
+    return self:getCardSprite(self.m_beginTouchCardIndex)
+end
+--[[
+获取最后一张选中牌节点
+]]
+function CC_CardView:getLastShootedCardSprite()
+    return self:getCardSprite(self.m_endTouchCardIndex)
+end
+--[[
 获取所有非选中牌节点
 返回值：所有非选中牌的节点
 ]]
@@ -946,6 +995,7 @@ function CC_CardView:getShootedCards()
     end
     return shoot_tb
 end
+
 --[[获取选中牌下标
 返回值：所有选中牌的下标
 ]]
@@ -970,22 +1020,6 @@ function CC_CardView:getShootedCardsByOrder()
     return cards_tb
 end
 --[[
-根据选中顺序获取选中牌(最后选中的牌排在最后)
-返回值：选中牌节点
-]]
-function CC_CardView:getShootedCardsSpriteByOrder()
-   local shoot_sp_tb = self:getAllShootedCaredSprite()
-    local card_tb = {}
-    local function compare(cdSp_A,cdSp_B)
-        return cdSp_A:getShootedOrder() < cdSp_B:getShootedOrder()
-    end
-    table.sort(shoot_sp_tb,compare)
-    for _ , card_sp in pairs(shoot_sp_tb) do
-        table.insert(card_tb,card_sp)
-    end
-    return card_tb
-end
---[[
 获取非选中牌
 返回值：所有非选中牌值
 ]]
@@ -1001,8 +1035,9 @@ function CC_CardView:getUnshootedCards()
 end
 --[[手牌整体缩放]]
 function CC_CardView:setCardViewScale(scale)
+    --TODO
     if type(scale) ~= 'number' then return end
-    --self:setCardSize(cc.size(self.m_cardSize.width * scale,self.m_cardSize.height * scale))
+    --self:setScale(scale)
 end
 --[[发送事件]]
 function CC_CardView:dispatchCardShootChangedEvent(eventType)
@@ -1018,7 +1053,6 @@ end
 -----------------------------------------------牌选中管理->end
 --注册事件
 function CC_CardView:onEnter()
-    printInfo("CC_CardView:onEnter")
     local function onTouchesBegan(touches, event)self:onTouchesBegan(touches,event) end
     local function onTouchesMoved(touches, event)self:onTouchesMoved(touches,event) end
     local function onTouchesEnded(touches, event)self:onTouchesEnded(touches,evnet) end
@@ -1031,7 +1065,6 @@ function CC_CardView:onEnter()
 end
 
 function CC_CardView:onExit()
-    printInfo("CC_CardView:onExit")
     if self._listener then
         self:getEventDispatcher():removeEventListener(self._listener)
     end
