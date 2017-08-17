@@ -1,6 +1,7 @@
 local CC_CardView = class("CC_CardView",cc.Layer)
 
-local CC_CardSprite = import("app/views/CC_CardSprite")
+--local CC_CardSprite = import("app/views/CC_CardSprite")
+local CC_CardSprite = import("..views/CC_CardSprite")
 
 CC_CardView.EventType = 
 {
@@ -44,8 +45,8 @@ function CC_CardView:onMemberAssigned()
     self.m_moveAnimationEnabled = true      --是否有移动动画
     self.m_autoShootDown = true             --点其他地方牌自动非选中
     self.m_singleTopMode = false            --是否单点触摸模式
+    self.m_touchEnabled = false             --是否可触摸
 
-    self.m_touchBeganPoint = cc.p(-1,-1)    --开始点击点
     self.m_beginTouchCardIndex = -1         --开始点击下标
     self.m_endTouchCardIndex = -1           --结束点击下标
 
@@ -75,12 +76,9 @@ cardImageFileName:文件名（xxxx.png）
 function CC_CardView:initWithFile(cardImageFileName)
     if type(cardImageFileName) ~= "string" then return end
     self:setCardImageFile(cardImageFileName)
-    self.m_cardRootNode = cc.SpriteBatchNode:create(cardImageFileName)
-    if self.m_cardRootNode then
-        self.m_cardRootNode:getTexture():setAliasTexParameters()--抗锯齿
-	    self.m_cardRootNode:addTo(self)
-        self.m_cardRootNode:setAnchorPoint(cc.p(0.5,0.5))
-    end
+    local cardSp = self:createCardSprite(0x00)
+    if cardSp then self:setCardSize(cardSp:getContentSize()) end
+    self.m_cardRootNode = cc.Node:create():addTo(self):move(display.left_bottom)
 end
 --[[
 设置资源文件名
@@ -92,13 +90,6 @@ function CC_CardView:setCardImageFile(cardImageFileName)
     self.m_cardImageFileName = cardImageFileName
     local str = string.sub(self.m_cardImageFileName,1,string.find(self.m_cardImageFileName,'.png')-1)
     self.m_cardImageFilePrefix = str .. '/'
-
-    local cardSp = self:createCardSprite(0x00)
-    if cardSp then
-        self:setCardSize(cardSp:getContentSize())
-    end
-    cardSp = nil
-    --printInfo("CC_CardView->setCardImageFile-> m_cardImgFile: " .. self.m_cardImageFilePrefix)
 end
 --[[
 创建单张牌
@@ -119,6 +110,7 @@ cards:table值
 function CC_CardView:setCards(cards)
     if type(cards) ~= 'table' then printInfo("CC_CardView:setCards -> parm must be table") return end
     if not self.m_cardRootNode then return end
+    self:setAllCardsShoot(false)
     local child_tb = self:getAllCardSprites()
     for i = 1 ,table.nums(cards) do
         if i <= table.nums(child_tb) then
@@ -140,7 +132,6 @@ function CC_CardView:setCards(cards)
             --printInfo("CC_CardView->remove index: " .. j)
         end
     end
-    
     self:reorderCardDirty()
     self:updateCardMetrics()
 end
@@ -295,10 +286,12 @@ end
 function CC_CardView:onTouchesBegan(touches, event)
     local touches_size = table.nums(touches)
     if touches_size <= 0 then return end
+    if not self.m_cardRootNode then return end
+    if not self.m_touchEnabled then return end
     local touch = touches[touches_size]
-    self.m_touchBeganPoint = self:convertToNodeSpace(touch:getLocation())
-    self.m_beginTouchCardIndex = self:getHitCardIndexForPos(self.m_touchBeganPoint)
-    printInfo("m_beginTouchCardIndex---------------> " .. self.m_beginTouchCardIndex)
+    local touchBeginPoint = self.m_cardRootNode:convertToNodeSpace(touch:getLocation())
+    self.m_beginTouchCardIndex = self:getHitCardIndexForPos(touchBeginPoint)
+    --printInfo("m_beginTouchCardIndex---------------> " .. self.m_beginTouchCardIndex)
 end
 --[[
 触摸移动事件
@@ -306,9 +299,11 @@ end
 function CC_CardView:onTouchesMoved(touches, event)
     local touches_size = table.nums(touches)
     if touches_size <= 0 then return end
+    if not self.m_cardRootNode then return end
+    if not self.m_touchEnabled then return end
     local touch = touches[touches_size]
     if self.m_beginTouchCardIndex ~= -1 then
-        local touchPoint = self:convertToNodeSpace(touch:getLocation())
+        local touchPoint = self.m_cardRootNode:convertToNodeSpace(touch:getLocation())
         local cardIndex = self:getHitCardIndexForPos(touchPoint)
         if cardIndex ~= -1 then
             self:setCardsSelect(self.m_beginTouchCardIndex,self.m_endTouchCardIndex,false)
@@ -323,33 +318,24 @@ end
 function CC_CardView:onTouchesEnded(touches, event)
     local touches_size = table.nums(touches)
     if touches_size <= 0 then return end
+    if not self.m_cardRootNode then return end
+    if not self.m_touchEnabled then return end
     local touch = touches[touches_size]
-    local touchPoint = self:convertToNodeSpace(touch:getLocation())
+    local touchPoint = self.m_cardRootNode:convertToNodeSpace(touch:getLocation())
     self.m_endTouchCardIndex = self:getHitCardIndexForPos(touchPoint)
     self:setCardsSelect(1,self:getCardCount() ,false)
     if self.m_beginTouchCardIndex ~= -1 and self.m_endTouchCardIndex ~= -1 then
         self:flipCardsShoot(self.m_beginTouchCardIndex,self.m_endTouchCardIndex)
+        self:doSingleTopMode()
         self:dispatchCardShootChangedEvent(CC_CardView.EventType.EVENT_HIT_CARD)
-        if self.m_singleTopMode then
-            local last_sp = self:getLastShootedCardSprite()
-            if last_sp then
-                local all_cards = self:getAllShootedCaredSprite()
-                local not_last = {}
-                for _ ,v in pairs(all_cards)do
-                    if v ~= last_sp then table.insert(not_last,v) end
-                end
-                self:setCardsShootByCardSpriteTable(not_last,false)
-            end
-        end
     else
         if self.m_autoShootDown then self:setAllCardsShoot(false) end
         self:dispatchCardShootChangedEvent(CC_CardView.EventType.EVENT_NOT_HIT)
     end
 
-    printInfo("m_endTouchCardIndex-----------------> " .. self.m_endTouchCardIndex .. "\n\n")
+    --printInfo("m_endTouchCardIndex-----------------> " .. self.m_endTouchCardIndex .. "\n\n")
     self.m_beginTouchCardIndex = -1
     self.m_endTouchCardIndex = -1
-    self.m_touchBeganPoint = cc.p(0,0)
 end
 --[[
 获取点击的牌的下标（也就是zorder）
@@ -616,15 +602,44 @@ function CC_CardView:setMoveAnimationEnable(enable)
     if type(enable) ~= 'boolean' then return end
     self.m_moveAnimationEnabled = enable
 end
-
+--[[是否单点触摸]]
 function CC_CardView:isSingleTopMode()
     return self.m_singleTopMode
 end
-
+--[[设置是否单点触摸]]
 function CC_CardView:setSingleTopMode(enable)
     if type(enable) ~= 'boolean' then return end
     self.m_singleTopMode = enable
 end
+--[[设置可触摸]]
+function CC_CardView:setTouchesEnabled(enable)
+    if type(enable) ~= 'boolean' then return end
+    self.m_touchEnabled = enable
+end
+
+function CC_CardView:getTouchesEnabled()
+    return self.m_touchEnabled
+end
+
+--[[执行单点触摸]]
+function CC_CardView:doSingleTopMode()
+    if not self.m_singleTopMode then return end
+    local last_sp = self:getLastShootedCardSprite()
+    if last_sp then
+        local all_cards = self:getAllShootedCaredSprite()
+        local not_last = {}
+        for _ ,card_sp in pairs(all_cards)do
+            if card_sp ~= last_sp then table.insert(not_last,card_sp) end
+        end
+        self:setCardsShootByCardSpriteTable(not_last,false)
+    end
+end
+
+function CC_CardView:setAutoShootDown(enable)
+    if type(enable)~= 'boolean' then return end
+    self.m_autoShootDown = enable
+end
+
 -----------------------------------------------get or set->end
 
 -----------------------------------------------操做牌->start
@@ -1034,10 +1049,12 @@ function CC_CardView:getUnshootedCards()
     return unshoot_tb
 end
 --[[手牌整体缩放]]
-function CC_CardView:setCardViewScale(scale)
-    --TODO
-    if type(scale) ~= 'number' then return end
-    --self:setScale(scale)
+function CC_CardView:setCardViewScale(scaleX,scaleY)
+    if type(scaleX) ~= 'number' then return end
+    scaleY = scaleY or scaleX
+    if self.m_cardRootNode then
+        self.m_cardRootNode:setScale(scaleX , scaleY)
+    end
 end
 --[[发送事件]]
 function CC_CardView:dispatchCardShootChangedEvent(eventType)

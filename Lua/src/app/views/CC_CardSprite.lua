@@ -11,7 +11,6 @@ function CC_CardSprite:ctor()
 	self.m_horiSpaceFactor = 1.0		--水平空间距离因子
 	self.m_vertSpaceFactor = 1.0		--垂直空间距离因子
 	self.m_horiFixedSpace  = 0          --水平拓展空间
-    self.m_scale = 1.0                  --缩放
 
 	self.m_horiIndex        = 0                --水平下标
 	self.m_vertIndex        = 0                --垂直下标
@@ -189,7 +188,7 @@ function CC_CardSprite:setDestPos(pos)
     self:stopAllActions()
     if self.m_cc_cardView and self.m_cc_cardView:isMoveAnimationEnabled() then
         --local ease_move = cc.EaseExponentialOut:create(cc.MoveTo:create(0.2,pos))
-        local ease_move = cc.EaseQuarticActionOut:create(cc.MoveTo:create(0.2,pos))
+        local ease_move = cc.EaseQuarticActionOut:create(cc.MoveTo:create(0.15,pos))
         self:runAction(ease_move)
     else
         self:setPosition(pos)
@@ -211,16 +210,6 @@ function CC_CardSprite:calcDestPos(pos)
     end
 end
 
-function CC_CardSprite:getCardSpriteScale()
-    return self.m_scale
-end
-
-function CC_CardSprite:setCardSpriteScale(scale)
-    if type(scale) ~= 'number' then return end
-    if self.m_scale == scale then return end
-    self:setScale(scale)
-end
-
 --[[更新精灵帧]]
 function CC_CardSprite:updateSpriteFrame()
     local imgFileName = self.m_imageFilePrefix .. "card_%02x.png"
@@ -231,9 +220,9 @@ function CC_CardSprite:updateSpriteFrame()
         frame = cc.SpriteFrameCache:getInstance():getSpriteFrame(fileStr)
     end
     if frame then
-        frame:getTexture():setAntiAliasTexParameters()
+        frame:getTexture():setAntiAliasTexParameters()          --消除抗锯齿,放大会模糊
+        --frame:getTexture():setAliasTexParameters()            --有锯齿,放大不模糊
 	    self:setSpriteFrame(frame)
-        --printInfo("CC_CardSprite:updateSpriteFrame->file<" .. fileStr .. ">")
     end
 end
 --[[检测缓存是否加载]]
