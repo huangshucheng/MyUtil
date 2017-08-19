@@ -32,7 +32,7 @@ function GameScene:addUI()
         self.cardView:move(display.center)
         self.cardView:setMoveAnimationEnable(true)
         self.cardView:setSingleTopMode(false)
-        self.cardView:setTouchesEnabled(true)
+        self.cardView:setCardViewEnabled(true)
         self.cardView:setExpanded(true)
     end
 

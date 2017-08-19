@@ -16,7 +16,7 @@ function CC_CardSprite:ctor()
 	self.m_vertIndex        = 0                --垂直下标
     self.m_shootedZOrder    = -1               --弹起zorder
 
-	self.m_selectColor  = cc.c3b(170,170,170)       --选中颜色
+	self.m_selectColor  = cc.c3b(120,120,120)       --选中颜色
 	self.m_disableColor = cc.c3b(100,100,100)       --禁用颜色
     self.m_normalColor  = cc.c3b(255,255,255)       --正常颜色
 
