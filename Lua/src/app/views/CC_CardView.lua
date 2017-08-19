@@ -1,6 +1,5 @@
 local CC_CardView = class("CC_CardView",cc.Layer)
 
---local CC_CardSprite = import("app/views/CC_CardSprite")
 local CC_CardSprite = import("..views/CC_CardSprite")
 
 CC_CardView.EventType = 
@@ -18,10 +17,10 @@ function CC_CardView:ctor()
         end
     end
     self:registerScriptHandler(onNodeEvent)
-    self:onMemberAssigned()
+    self:Init()
 end
 
-function CC_CardView:onMemberAssigned()
+function CC_CardView:Init()
     self.m_cardRootNode = nil               --根节点，放所有牌
 
     self.m_cardImageFileName = nil          --文件名
@@ -46,6 +45,7 @@ function CC_CardView:onMemberAssigned()
     self.m_autoShootDown = true             --点其他地方牌自动非选中
     self.m_singleTopMode = false            --是否单点触摸模式
     self.m_touchEnabled = false             --是否可触摸
+    self.m_isExpand = false                 --是否可拓展
 
     self.m_beginTouchCardIndex = -1         --开始点击下标
     self.m_endTouchCardIndex = -1           --结束点击下标
@@ -57,37 +57,38 @@ function CC_CardView:onMemberAssigned()
 end
 --[[
 创建
-cardImageFileName:文件名（xxxx.png）
+fileStr:文件名（xxxx.png）
+需要预加载.plist .png
 ]]
-function CC_CardView:createWithFile(cardImageFileName)
-    if not cc.FileUtils:getInstance():isFileExist(cardImageFileName) then 
-        printInfo("CC_CardView->initWithFile<" .. cardImageFileName .. "> is nil") 
+function CC_CardView:createWithFile(fileStr)
+    if not cc.FileUtils:getInstance():isFileExist(fileStr) then 
+        printInfo("CC_CardView->initWithFile<" .. fileStr .. "> is nil") 
         return nil
     end
     local cv = CC_CardView.new()
-    cv:initWithFile(cardImageFileName) 
+    cv:initWithFile(fileStr) 
     return cv
 end
 
 --[[
 初始化
-cardImageFileName:文件名（xxxx.png）
+fileStr:文件名（xxxx.png）
 ]]
-function CC_CardView:initWithFile(cardImageFileName)
-    if type(cardImageFileName) ~= "string" then return end
-    self:setCardImageFile(cardImageFileName)
+function CC_CardView:initWithFile(fileStr)
+    if type(fileStr) ~= "string" then return end
+    self:setCardImageFile(fileStr)
     local cardSp = self:createCardSprite(0x00)
     if cardSp then self:setCardSize(cardSp:getContentSize()) end
     self.m_cardRootNode = cc.Node:create():addTo(self):move(display.left_bottom)
 end
 --[[
 设置资源文件名
-cardImageFileName:文件名（xxxx.png）
+fileStr:文件名（xxxx.png）
 ]]
-function CC_CardView:setCardImageFile(cardImageFileName)
-    if type(cardImageFileName) ~= "string" then return end
-    if self.m_cardImageFileName == cardImageFileName then return end
-    self.m_cardImageFileName = cardImageFileName
+function CC_CardView:setCardImageFile(fileStr)
+    if type(fileStr) ~= "string" then return end
+    if self.m_cardImageFileName == fileStr then return end
+    self.m_cardImageFileName = fileStr
     local str = string.sub(self.m_cardImageFileName,1,string.find(self.m_cardImageFileName,'.png')-1)
     self.m_cardImageFilePrefix = str .. '/'
 end
@@ -128,7 +129,7 @@ function CC_CardView:setCards(cards)
     
     if table.nums(child_tb) > table.nums(cards) then
         for j = table.nums(child_tb) , table.nums(cards) + 1 , -1 do
-            self.m_cardRootNode:removeChild(child_tb[j],true)
+            child_tb[j]:removeFromParent()
             --printInfo("CC_CardView->remove index: " .. j)
         end
     end
@@ -145,7 +146,7 @@ function CC_CardView:setCardSize(size)
     self.m_maxHoriSpace = self.m_cardSize.width * 3 / 5
     self.m_minVertSpace = self.m_cardSize.height / 3
     self.m_maxVertSpace = self.m_cardSize.height  / 2 
-    self.m_expandHoriSpace = self.m_cardSize.width * 0.15
+    self.m_expandHoriSpace = self.m_maxHoriSpace * 0.80
     self:updateCardMetrics()
     
     printInfo("CC_CardView->m_minHoriSpace: " .. self.m_minHoriSpace)
@@ -179,7 +180,6 @@ function CC_CardView:updateCardMetrics()
     self.m_currentHoriSpace = math.max(self.m_currentHoriSpace,self.m_minHoriSpace)
     self.m_currentVertSpace = math.min(self.m_currentVertSpace,self.m_maxVertSpace)
     self.m_currentVertSpace = math.max(self.m_currentVertSpace,self.m_minVertSpace)
-
     local row_width_tb = {}
     local width , height = 0 , 0
     local horiIndex , vertIndex = 0 , 0
@@ -260,7 +260,7 @@ function CC_CardView:calcAllCardSpriteHoriFixedSpace()
     local child_tb = self:getAllCardSprites()
     if table.nums(child_tb) == 0 then return space end
     for _, cardSprite in pairs(child_tb) do
-        if cardSprite:getHoriFixedSpace() == 0 and cardSprite:getLocalZOrder() ~= 0 then
+        if cardSprite:getHoriFixedSpace() ~= 0 and cardSprite:getLocalZOrder() ~= 0 then
             space = space + cardSprite:getHoriFixedSpace()
         end
     end
@@ -327,9 +327,15 @@ function CC_CardView:onTouchesEnded(touches, event)
     if self.m_beginTouchCardIndex ~= -1 and self.m_endTouchCardIndex ~= -1 then
         self:flipCardsShoot(self.m_beginTouchCardIndex,self.m_endTouchCardIndex)
         self:doSingleTopMode()
+        if table.nums(self:getShootedCards()) <= self:getCardCount() / 2 and self.m_isExpand then
+            if self.m_currentHoriSpace < self.m_maxHoriSpace - 10 then
+                self:setCardsExpand(self.m_beginTouchCardIndex,self.m_endTouchCardIndex,true)
+            end
+        end
         self:dispatchCardShootChangedEvent(CC_CardView.EventType.EVENT_HIT_CARD)
     else
         if self.m_autoShootDown then self:setAllCardsShoot(false) end
+        self:setAllCardsExPand(false)
         self:dispatchCardShootChangedEvent(CC_CardView.EventType.EVENT_NOT_HIT)
     end
 
@@ -387,17 +393,7 @@ function CC_CardView:expandCards(index , count)
     if type(index)~= 'number' or type(count) ~= 'number' then return end
     local beginIndex = math.ceil(index - count / 2) 
     local endIndex = math.ceil(index + count / 2)
-    self:adjustAllCardSpriteSpace()
     self:setCardsExpand(beginIndex,endIndex,true)
-end
---[[
-调整所有牌位置
-]]
-function CC_CardView:adjustAllCardSpriteSpace()
-    for _ ,cardSprite in pairs(self:getAllCardSprites()) do
-        self:adjustCardSpriteSpace(cardSprite)
-    end
-    self:updateCardMetrics()
 end
 --[[
 拓展牌
@@ -418,9 +414,9 @@ function CC_CardView:setCardsExpand(beginIndex , endIndex , expand)
 
     for idx = beginIndex , endIndex do
         if child_tb[idx] then
-            if not child_tb[idx]:isExpanded() and expand then
-                child_tb[idx]:setHoriFixedSpace(self.m_maxHoriSpace)
-            elseif not expand and child_tb[idx]:isExpanded() then
+            if (not child_tb[idx]:isExpanded()) and expand then
+                child_tb[idx]:setHoriFixedSpace(self.m_expandHoriSpace)
+            elseif (not expand) and child_tb[idx]:isExpanded() then
                 child_tb[idx]:setHoriFixedSpace(0)
             end
             child_tb[idx]:setExpanded(expand)
@@ -428,6 +424,13 @@ function CC_CardView:setCardsExpand(beginIndex , endIndex , expand)
     end
     self:updateCardMetrics()
 end
+--[[
+是否所有牌都拓展
+]]
+function CC_CardView:setAllCardsExPand(expand)
+    self:setCardsExpand(1,self:getCardCount(),expand)
+end
+
 --[[
 设置牌为选中或非选中
 beginIndex:开始下标
@@ -620,6 +623,15 @@ end
 function CC_CardView:getTouchesEnabled()
     return self.m_touchEnabled
 end
+--[[是否可拓展]]
+function CC_CardView:setExpanded(enable)
+    if type(enable) ~= 'boolean' then return end
+    self.m_isExpand = enable
+end
+
+function CC_CardView:isExpanded()
+    return self.m_isExpand
+end
 
 --[[执行单点触摸]]
 function CC_CardView:doSingleTopMode()
@@ -771,11 +783,10 @@ end
 card:牌值
 ]]
 function CC_CardView:removeCard(card)
-    if not self.m_cardRootNode then return false end
     local cardSprite_tb = self:findCardSprite(card)
     if table.nums(cardSprite_tb) == 0 then return false end
     if cardSprite_tb[1] then
-        self.m_cardRootNode:removeChild(cardSprite_tb[1] , true)
+        cardSprite_tb[1]:removeFromParent()
     end
     self:reorderCardDirty()
     self:updateCardMetrics()
@@ -786,10 +797,9 @@ end
 index:下标
 ]]
 function CC_CardView:removeCardByIndex(index)
-    if not self.m_cardRootNode then return false end
     local cardSprite = self:getCardSprite(index)
     if not cardSprite then return false end
-    self.m_cardRootNode:removeChild(cardSprite , true)
+    cardSprite:removeFromParent()
     self:reorderCardDirty()
     self:updateCardMetrics()
     return true
@@ -819,7 +829,7 @@ function CC_CardView:removeCardsByIndex(indexs)
         end
     end
     for _ , child in pairs(cardSprite_tb)do
-        self.m_cardRootNode:removeChild(child , true)
+        child:removeFromParent()
     end
     self:reorderCardDirty()
     self:updateCardMetrics()
@@ -828,16 +838,38 @@ end
 删除所有选中牌
 ]]
 function CC_CardView:removeShootedCards()
-    if not self.m_cardRootNode then return end
     local shoot_tb = self:getAllShootedCaredSprite()
     if table.nums(shoot_tb)> 0  then
         for _ , cardSp in pairs(shoot_tb)do
-            self.m_cardRootNode:removeChild(cardSp,true)
+           cardSp:removeFromParent()
         end
     end
     self:reorderCardDirty()
     self:updateCardMetrics()
 end
+--[[出牌动画]]
+function CC_CardView:removeShootedCardsByActions()
+    local shoot_tb = self:getAllShootedCaredSprite()
+    if table.nums(shoot_tb)> 0  then
+        self:setTouchesEnabled(false)
+        for _ , cardSp in pairs(shoot_tb)do
+           local removeSelf = cc.RemoveSelf:create()
+           local moveTo = cc.MoveTo:create(0.2,cc.p(cardSp:getPositionX(),cardSp:getPositionY() + 120))
+           local easeMove = cc.EaseIn:create(moveTo,0.2)
+           local fadeout = cc.FadeOut:create(0.2)
+           local spawn = cc.Spawn:create(easeMove,fadeout)
+           cardSp:runAction(cc.Sequence:create(spawn,removeSelf))
+        end
+    end
+    local delay = cc.DelayTime:create(0.2)
+    local cfk = cc.CallFunc:create(function()
+        self:reorderCardDirty()
+        self:updateCardMetrics()
+        self:setTouchesEnabled(true)
+    end)
+    self:runAction(cc.Sequence:create(delay,cfk))
+end
+
 --[[
 删除所有牌
 ]]
@@ -1006,7 +1038,7 @@ function CC_CardView:getShootedCards()
     local shoot_tb = {}
     local shoot_sp_tb = self:getAllShootedCaredSprite()
     for _ , card_sp in pairs(shoot_sp_tb)do
-        if card_sp:isShooted() then table.insert(shoot_tb,card_sp:getCard()) end
+         table.insert(shoot_tb,card_sp:getCard())
     end
     return shoot_tb
 end

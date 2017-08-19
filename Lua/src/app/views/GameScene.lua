@@ -4,6 +4,7 @@ local CardView = require("app.views.CC_CardView")
 function GameScene:onCreate()
     self:addUI()
     self:addButton()
+    self.m_horispace = 50
 end
 
 function GameScene:addUI()
@@ -30,7 +31,9 @@ function GameScene:addUI()
         self.cardView:setCards(cd)
         self.cardView:move(display.center)
         self.cardView:setMoveAnimationEnable(true)
-        self.cardView:setSingleTopMode(true)
+        self.cardView:setSingleTopMode(false)
+        self.cardView:setTouchesEnabled(true)
+        self.cardView:setExpanded(true)
     end
 
     self.cardView:addCardViewEventListener(function(sender,eventType)
@@ -54,8 +57,10 @@ function GameScene:addButton()
         ---self.cardView:setCards(Card_1)
         --self.cardView:ignoreAnchorPointForPosition(false)
         --local anchp = self.cardView:getAnchorPoint()
-        self.cardView:setCardViewScale(0.5)
+        --self.cardView:setCardViewScale(0.5)
         --printInfo("x:   " .. anchp.x .. "   y:  " .. anchp.y)
+        self.cardView:removeShootedCardsByActions()
+        
     end)
 
     local btn_1 = ccui.Button:create("BT_YAOGAN.png")
@@ -64,7 +69,8 @@ function GameScene:addButton()
     btn_1:addClickEventListener(function(sender)
         printInfo("hcc fuck---->1----->click \n\n")
         --self.cardView:setCards(Card_2)
-        self.cardView:setCardViewScale(1.0)
+        --self.cardView:setCards(Card_3)
+  
     end)
 
     local btn_2 = ccui.Button:create("BT_YAOGAN.png")
@@ -100,7 +106,6 @@ function GameScene:addButton()
         --local tb = self.cardView:findCardSprite(0X11)
         --local tb1 = self.cardView:findCardSprite(0X36)
         --printInfo("findNumber--->0x11: " .. #tb .. '  ,0x36: ' .. #tb1)
-        local insertCard = self.cardView:insertCard(self.cardView:getCardCount() , 0X11)
         --printInfo("insertCard: " .. insertCard:getCard())
         --self.cardView:removeCard(0X11)
         --self.cardView:removeCardByIndex(0)
@@ -109,7 +114,7 @@ function GameScene:addButton()
         --self.cardView:removeCardsByIndex({0,1,2,3,4})
         local shoottb = {0X36,0X37,0X38,0X36}
         for _ ,v in pairs(shoottb)do
-            --self.cardView:setCardShoot(v , true)
+            self.cardView:insertCard(self.cardView:getCardCount() , v)
         end
         printInfo("card index 1== " .. self.cardView:getCard(1))
         --self.cardView:setCardsShootByCardTable(shoottb , true)
