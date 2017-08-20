@@ -123,10 +123,10 @@ function CC_CardView:setCardSize(size)
     if type(size) ~= 'table' then return end
     self.m_cardSize = size
     self.m_minHoriSpace = self.m_cardSize.width / 5
-    self.m_maxHoriSpace = self.m_cardSize.width * 3 / 5
+    self.m_maxHoriSpace = self.m_cardSize.width * 2 / 5
     self.m_minVertSpace = self.m_cardSize.height / 3
     self.m_maxVertSpace = self.m_cardSize.height  / 2 
-    self.m_expandSpace = self.m_maxHoriSpace * 0.80
+    self.m_expandSpace = self.m_maxHoriSpace * 1.2
     self:updateCardMetrics()
     
     printInfo("CC_CardView->m_minHoriSpace: " .. self.m_minHoriSpace)
@@ -311,7 +311,7 @@ function CC_CardView:onTouchesEnded(touches, event)
     if self.m_startIndex ~= -1 and self.m_endIndex ~= -1 then
         self:flipCardsShoot(self.m_startIndex,self.m_endIndex)
         if self:getShootedCardCount() <= self:getCardCount() / 2 and self.m_isExpand then
-            if self.m_curHoriSpace < self.m_maxHoriSpace - 10 then
+            if self.m_curHoriSpace < self.m_maxHoriSpace then
                 self:flipCardsExpand()
             end
         end

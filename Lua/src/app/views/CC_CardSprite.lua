@@ -16,7 +16,7 @@ function CC_CardSprite:ctor()
 	self.m_vertIndex        = 0                --垂直下标
     self.m_shootedZOrder    = -1               --弹起zorder
 
-	self.m_selectColor  = cc.c3b(120,120,120)       --选中颜色
+	self.m_selectColor  = cc.c3b(150,150,150)       --选中颜色
 	self.m_disableColor = cc.c3b(100,100,100)       --禁用颜色
     self.m_normalColor  = cc.c3b(255,255,255)       --正常颜色
 
@@ -187,8 +187,8 @@ function CC_CardSprite:setDestPos(pos)
     self.m_destPos = pos
     self:stopAllActions()
     if self.m_cc_cardView and self.m_cc_cardView:isMoveAnimationEnabled() then
-        local ease_move = cc.EaseExponentialOut:create(cc.MoveTo:create(0.2,pos))
-        --local ease_move = cc.EaseQuarticActionOut:create(cc.MoveTo:create(0.15,pos))
+        --local ease_move = cc.EaseQuarticActionOut:create(cc.MoveTo:create(0.2,pos))
+        local ease_move = cc.EaseCircleActionOut:create(cc.MoveTo:create(0.2,pos))
         self:runAction(ease_move)
     else
         self:setPosition(pos)
