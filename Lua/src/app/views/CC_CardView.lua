@@ -126,7 +126,7 @@ function CC_CardView:setCardSize(size)
     self.m_maxHoriSpace = self.m_cardSize.width * 2 / 5
     self.m_minVertSpace = self.m_cardSize.height / 3
     self.m_maxVertSpace = self.m_cardSize.height  / 2 
-    self.m_expandSpace = self.m_maxHoriSpace * 1.2
+    self.m_expandSpace = self.m_maxHoriSpace * 1.3
     self:updateCardMetrics()
     
     printInfo("CC_CardView->m_minHoriSpace: " .. self.m_minHoriSpace)
@@ -311,9 +311,7 @@ function CC_CardView:onTouchesEnded(touches, event)
     if self.m_startIndex ~= -1 and self.m_endIndex ~= -1 then
         self:flipCardsShoot(self.m_startIndex,self.m_endIndex)
         if self:getShootedCardCount() <= self:getCardCount() / 2 and self.m_isExpand then
-            if self.m_curHoriSpace < self.m_maxHoriSpace then
-                self:flipCardsExpand()
-            end
+            if self.m_curHoriSpace < self.m_maxHoriSpace then self:flipCardsExpand() end
         end
         self:doSingleTopMode()
         self:dispatchCardShootChangedEvent(CC_CardView.EventType.EVENT_HIT_CARD)
@@ -322,6 +320,7 @@ function CC_CardView:onTouchesEnded(touches, event)
         self:setAllCardsExPand(false)
         self:dispatchCardShootChangedEvent(CC_CardView.EventType.EVENT_NOT_HIT)
     end
+    
     self.m_startIndex , self.m_endIndex = -1 , -1
 end
 --[[
@@ -372,7 +371,7 @@ count:拓展数量
 ]]
 function CC_CardView:expandCards(index , count)
     if type(index)~= 'number' or type(count) ~= 'number' then return end
-    local beginIndex = math.ceil(index - count / 2) 
+    local beginIndex = math.ceil(index - count / 2)
     local endIndex = math.ceil(index + count / 2)
     self:setCardsExpand(beginIndex,endIndex,true)
 end
