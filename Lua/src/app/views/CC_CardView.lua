@@ -78,8 +78,8 @@ function CC_CardView:initWithFile(fileStr)
     self.m_imgFile = string.sub(fileStr,1,string.find(fileStr,'.png')-1) .. '/'
     local cardSp = self:createCardSprite(0x00)
     if cardSp then self:setCardSize(cardSp:getContentSize()) end
-    --self.m_rootNode = cc.Node:create():addTo(self):move(display.left_bottom)
-    self.m_rootNode = cc.SpriteBatchNode:create(fileStr):addTo(self):move(display.left_bottom)
+    self.m_rootNode = cc.Node:create():addTo(self):move(display.left_bottom)
+    --self.m_rootNode = cc.SpriteBatchNode:create(fileStr):addTo(self):move(display.left_bottom)
 end
 --[[
 创建单张牌
