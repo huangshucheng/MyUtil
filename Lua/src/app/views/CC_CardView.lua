@@ -51,7 +51,8 @@ function CC_CardView:Init()
     self.m_expandCount = 5                  --默认拓展数量
     self.m_shootHeight = 30                 --弹起高度
 
-    self.m_cardCallback = nil           --点击回调
+    self.m_cardCallback = nil               --点击回调
+    self.m_isTouching = false               --是否正在点击
 end
 --[[
 创建
@@ -77,7 +78,8 @@ function CC_CardView:initWithFile(fileStr)
     self.m_imgFile = string.sub(fileStr,1,string.find(fileStr,'.png')-1) .. '/'
     local cardSp = self:createCardSprite(0x00)
     if cardSp then self:setCardSize(cardSp:getContentSize()) end
-    self.m_rootNode = cc.Node:create():addTo(self):move(display.left_bottom)
+    --self.m_rootNode = cc.Node:create():addTo(self):move(display.left_bottom)
+    self.m_rootNode = cc.SpriteBatchNode:create(fileStr):addTo(self):move(display.left_bottom)
 end
 --[[
 创建单张牌
@@ -268,24 +270,21 @@ end
 --[[
 开始触摸屏幕事件
 ]]
-function CC_CardView:onTouchesBegan(touches, event)
-    local touches_size = table.nums(touches)
-    if touches_size <= 0 then return end
+function CC_CardView:onTouchBegan(touch, event)
     if not self.m_rootNode then return end
-    if not self.m_touchEnabled then return end
-    local touch = touches[touches_size]
+    if not self.m_touchEnabled or self.m_isTouching then return false end
+    printInfo('touch began')
+    self.m_isTouching = true
     local touchBeginPoint = self.m_rootNode:convertToNodeSpace(touch:getLocation())
     self.m_startIndex = self:getHitCardIndexForPos(touchBeginPoint)
+    return true
 end
 --[[
 触摸移动事件
 ]]
-function CC_CardView:onTouchesMoved(touches, event)
-    local touches_size = table.nums(touches)
-    if touches_size <= 0 then return end
+function CC_CardView:onTouchMoved(touch, event)
     if not self.m_rootNode then return end
     if not self.m_touchEnabled then return end
-    local touch = touches[touches_size]
     if self.m_startIndex ~= -1 then
         local touchPoint = self.m_rootNode:convertToNodeSpace(touch:getLocation())
         local cardIndex = self:getHitCardIndexForPos(touchPoint)
@@ -299,19 +298,19 @@ end
 --[[
 触摸结束事件
 ]]
-function CC_CardView:onTouchesEnded(touches, event)
-    local touches_size = table.nums(touches)
-    if touches_size <= 0 then return end
+function CC_CardView:onTouchEnded(touch, event)
     if not self.m_rootNode then return end
     if not self.m_touchEnabled then return end
-    local touch = touches[touches_size]
+    printInfo('touch ended')
+    self.m_isTouching = false
     local touchPoint = self.m_rootNode:convertToNodeSpace(touch:getLocation())
-    self.m_endIndex = self:getHitCardIndexForPos(touchPoint)
     self:setCardsSelect(1,self:getCardCount() ,false)
+    self.m_endIndex = self:getHitCardIndexForPos(touchPoint)
     if self.m_startIndex ~= -1 and self.m_endIndex ~= -1 then
         self:flipCardsShoot(self.m_startIndex,self.m_endIndex)
-        if self:getShootedCardCount() <= self:getCardCount() / 2 and self.m_isExpand then
-            if self.m_curHoriSpace < self.m_maxHoriSpace then self:flipCardsExpand() end
+        if self:getShootedCardCount() <= math.ceil(self:getCardCount() / 2) and self.m_isExpand then
+            --if self.m_curHoriSpace < self.m_maxHoriSpace then self:flipCardsExpand() end
+            self:flipCardsExpand()
         end
         self:doSingleTopMode()
         self:dispatchCardShootChangedEvent(CC_CardView.EventType.EVENT_HIT_CARD)
@@ -321,6 +320,12 @@ function CC_CardView:onTouchesEnded(touches, event)
         self:dispatchCardShootChangedEvent(CC_CardView.EventType.EVENT_NOT_HIT)
     end
     
+    self.m_startIndex , self.m_endIndex = -1 , -1
+end
+--[[触摸取消]]
+function CC_CardView:onTouchCancelled(touch, event)
+    printInfo('touch cancelled')
+    self.m_isTouching = false
     self.m_startIndex , self.m_endIndex = -1 , -1
 end
 --[[
@@ -404,6 +409,25 @@ function CC_CardView:setCardsExpand(beginIndex , endIndex , expand)
     end
     self:updateCardMetrics()
 end
+--[[
+拓展牌
+cards:牌table
+]]
+function CC_CardView:setCardsExpandByCardsTable(cards,expand)
+    if type(cards) ~= 'table' then return end
+    if expand == nil then expand = true end
+    local cards_tb = self:findCardSprites(cards)
+    for _ , cd_sp in pairs(cards_tb) do
+        if (not cd_sp:isExpanded()) and expand then
+            cd_sp:setHoriFixedSpace(self.m_expandSpace)
+        elseif (not expand) and cd_sp:isExpanded() then
+            cd_sp:setHoriFixedSpace(0)
+        end
+        cd_sp:setExpanded(expand)
+    end
+    self:updateCardMetrics()
+end
+
 --[[
 是否所有牌都拓展
 ]]
@@ -702,19 +726,43 @@ function CC_CardView:getCardSprite(index)
     return self:getAllCardSprites()[index]
 end
 --[[
-查找牌值==card的所有节点
+查找牌值==card的节点（不重复）
 card:牌值
 ]]
 function CC_CardView:findCardSprite(card)
-    if type(card) ~= 'number' then return {} end
+    if type(card) ~= 'number' then return end
     local child_tb = self:getAllCardSprites()
-    local find_tb = {}
     for _ ,cardSprite in pairs(child_tb) do
         if cardSprite:getCard() == card then
-            table.insert(find_tb,cardSprite)
+            return cardSprite
         end
     end
-    return find_tb
+    return nil
+end
+--[[
+查找牌值==cards的节点（不重复）
+cards:牌值table
+]]
+function CC_CardView:findCardSprites(cards)
+    if type(cards) ~= 'table' then return {} end
+    local index_tb = {}
+    local cardsIndex = 1
+    local allCards = self:getCards()
+    for idx = 1 , table.nums(allCards) do
+        if cardsIndex > table.nums(cards) then break end
+        if allCards[idx] == cards[cardsIndex] then
+             table.insert(index_tb,idx)
+             cardsIndex = cardsIndex +1 
+             --printInfo("find index: " .. idx)
+        end
+    end
+
+    local cardSprites = {}
+    for i = 1 , table.nums(index_tb) do
+        local sp = self:getCardSprite(index_tb[i])
+        table.insert(cardSprites,sp)
+    end
+    return cardSprites
 end
 --[[
 插入一张牌
@@ -770,11 +818,9 @@ end
 card:牌值
 ]]
 function CC_CardView:removeCard(card)
-    local cardSprite_tb = self:findCardSprite(card)
-    if table.nums(cardSprite_tb) == 0 then return false end
-    if cardSprite_tb[1] then
-        cardSprite_tb[1]:removeFromParent()
-    end
+    local cardSprite = self:findCardSprite(card)
+    if not cardSprite then return false end
+    cardSprite:removeFromParent()
     self:updateOrderAndSpace()
     return true
 end
@@ -849,7 +895,28 @@ function CC_CardView:removeShootedCardsByActions()
     end)
     self:runAction(cc.Sequence:create(delay,cfk))
 end
-
+--[[删除指定牌]]
+function CC_CardView:removeCardsByActions(cards)
+    if type(cards) ~= 'table' then return end
+    if table.nums(cards) == 0 then return end
+    local card_tb = self:findCardSprites(cards)
+    if table.nums(card_tb) > 0 then
+        self:setCardViewEnabled(false)
+        for _ , cardSp in pairs(card_tb)do
+           local removeSelf = cc.RemoveSelf:create()
+           local moveTo = cc.MoveTo:create(0.2,cc.p(cardSp:getPositionX(),cardSp:getPositionY() + 120))
+           local fadeout = cc.FadeOut:create(0.2)
+           local spawn = cc.Spawn:create(moveTo,fadeout)
+           cardSp:runAction(cc.Sequence:create(spawn,removeSelf))
+        end
+    end
+    local delay = cc.DelayTime:create(0.2)
+    local cfk = cc.CallFunc:create(function()
+        self:updateOrderAndSpace()
+        self:setCardViewEnabled(true)
+    end)
+    self:runAction(cc.Sequence:create(delay,cfk))
+end
 --[[
 删除所有牌
 ]]
@@ -896,17 +963,12 @@ card:牌值
 shoot:是否选中
 ]]
 function CC_CardView:setCardShoot(card,shoot)
-    local card_tb = self:findCardSprite(card)
-    if not card_tb then return end
-    if table.nums(card_tb) > 0 then
-        for _ ,card_sp in pairs(card_tb) do
-            if card_sp:isShooted() ~= shoot then
-                card_sp:setShooted(shoot)
-                break
-            end
-        end
+    if type(card)~= 'number' or type(shoot) ~= 'boolean' then return end
+    local cardSprite = self:findCardSprite(card)
+    if cardSprite then
+        cardSprite:setShooted(shoot)
+        self:updateCardMetrics()
     end
-    self:updateCardMetrics()
 end
 --[[
 设置牌是否选中
@@ -1082,13 +1144,21 @@ end
 -----------------------------------------------牌选中管理->end
 --注册事件
 function CC_CardView:onEnter()
-    local function onTouchesBegan(touches, event)self:onTouchesBegan(touches,event) end
-    local function onTouchesMoved(touches, event)self:onTouchesMoved(touches,event) end
-    local function onTouchesEnded(touches, event)self:onTouchesEnded(touches,evnet) end
-    local listener = cc.EventListenerTouchAllAtOnce:create()    
-    listener:registerScriptHandler(onTouchesBegan,cc.Handler.EVENT_TOUCHES_BEGAN )
-    listener:registerScriptHandler(onTouchesMoved,cc.Handler.EVENT_TOUCHES_MOVED )
-    listener:registerScriptHandler(onTouchesEnded,cc.Handler.EVENT_TOUCHES_ENDED )
+    local function onTouchBegan(touch, event) 
+        if(self:onTouchBegan(touch,event))then
+            return true 
+        else
+            return false
+        end
+    end
+    local function onTouchMoved(touch, event)self:onTouchMoved(touch,event) end
+    local function onTouchEnded(touch, event)self:onTouchEnded(touch,evnet) end
+    local function onTouchCancelled(touch, event)self:onTouchCancelled(touch,evnet) end
+    local listener = cc.EventListenerTouchOneByOne:create()    
+    listener:registerScriptHandler(onTouchBegan,cc.Handler.EVENT_TOUCH_BEGAN )
+    listener:registerScriptHandler(onTouchMoved,cc.Handler.EVENT_TOUCH_MOVED )
+    listener:registerScriptHandler(onTouchEnded,cc.Handler.EVENT_TOUCH_ENDED )
+    listener:registerScriptHandler(onTouchCancelled,cc.Handler.EVENT_TOUCH_CANCELLED )
     self:getEventDispatcher():addEventListenerWithSceneGraphPriority(listener, self)
     self._listener = listener
 end

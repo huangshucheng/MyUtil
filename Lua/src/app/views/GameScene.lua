@@ -59,8 +59,12 @@ function GameScene:addButton()
         --local anchp = self.cardView:getAnchorPoint()
         --self.cardView:setCardViewScale(0.5)
         --printInfo("x:   " .. anchp.x .. "   y:  " .. anchp.y)
-        self.cardView:removeShootedCardsByActions()
-        
+        --self.cardView:removeShootedCardsByActions()
+
+        --self.cardView:removeCardsByActions({0x36,0x36,0x36})
+        --self.cardView:removeCards({0x36,0x36})
+        --self.cardView:setExpanded()
+        self.cardView:setCardsExpandByCardsTable({0X36,0X36,0X36,0X36})
     end)
 
     local btn_1 = ccui.Button:create("BT_YAOGAN.png")
@@ -68,9 +72,9 @@ function GameScene:addButton()
     btn_1:addTo(self)
     btn_1:addClickEventListener(function(sender)
         printInfo("hcc fuck---->1----->click \n\n")
-        --self.cardView:setCards(Card_2)
+        self.cardView:setCards(Card_2)
         --self.cardView:setCards(Card_3)
-  
+    
     end)
 
     local btn_2 = ccui.Button:create("BT_YAOGAN.png")
@@ -78,7 +82,21 @@ function GameScene:addButton()
     btn_2:addTo(self)
     btn_2:addClickEventListener(function(sender)
         printInfo("hcc fuck---->2----->click \n\n")
-        self.cardView:setCards(Card_3)
+        --self.cardView:setCards(Card_3)
+        --self.cardView:setCardsExpand(1,6,true)
+        local card_sp = self.cardView:getCardSprite(1)
+        --local __sp = cc.Sprite:create("navstick.png")
+        local texture = cc.Director:getInstance():getTextureCache():addImage("navstick.png")
+        --local __sp = cc.Sprite:createWithTexture(texture)
+
+        --tmp_sp:addTo(self):move(display.center)
+        for _,node in pairs(self.cardView:getChildren())do
+            --node:insertQuadFromSprite(display.newSprite("navstick.png"),0)
+            --node = display.newNode()
+            --node:getTextureAtlas():setTexture(texture)
+        end
+
+        --card_sp:setSpriteFrame("images/card/card-tddz/card_11.png")
     end)
 
     local btn_3 = ccui.Button:create("BT_YAOGAN.png")
