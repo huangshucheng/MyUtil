@@ -1,11 +1,11 @@
 local CC_CardView = class("CC_CardView",cc.Layer)
 
-local CC_CardSprite = import("..views/CC_CardSprite")
+local CC_CardSprite = import(".CC_CardSprite")
 
 CC_CardView.EventType = 
 {
-    EVENT_HIT_CARD = 0, --点击牌
-    EVENT_NOT_HIT = 1   --没点击牌
+    EVENT_HIT_CARD = 0,     --点击牌
+    EVENT_NOT_HIT = 1       --没点击牌
 }
 
 function CC_CardView:ctor()
@@ -21,38 +21,38 @@ function CC_CardView:ctor()
 end
 
 function CC_CardView:Init()
-    self.m_rootNode = nil               --根节点，放所有牌
-    self.m_imgFile = nil                --文件路径（.png前加/）
+    self.m_rootNode         = nil               --根节点，放所有牌
+    self.m_imgFile          = nil               --文件路径（.png前加/）
 
-    self.m_cardSize = cc.size(0,0)          --牌大小
-    self.m_minHoriSpace = 0                 --最小水平距离
-    self.m_maxHoriSpace = 0                 --最大水平距离
-    self.m_minVertSpace = 0                 --最小垂直距离
-    self.m_maxVertSpace = 0                 --最大垂直距离
-    self.m_expandSpace = 0                  --水平拓展距离
+    self.m_cardSize         = cc.size(0,0)      --牌大小
+    self.m_minHoriSpace     = 0                 --最小水平距离
+    self.m_maxHoriSpace     = 0                 --最大水平距离
+    self.m_minVertSpace     = 0                 --最小垂直距离
+    self.m_maxVertSpace     = 0                 --最大垂直距离
+    self.m_expandSpace      = 0                 --水平拓展距离
 
-    self.m_maxHeight = 0                    --最大高度
-    self.m_maxWidth = display.width-140     --最大宽度
+    self.m_maxHeight        = 0                 --最大高度
+    self.m_maxWidth         = display.width-140 --最大宽度
 
-    self.m_curHoriSpace = 0                 --当前水平距离
-    self.m_curVertSpace = 0                 --当前垂直距离
+    self.m_curHoriSpace     = 0                 --当前水平距离
+    self.m_curVertSpace     = 0                 --当前垂直距离
 
-    self.m_lastOrder = 1                    --最后选中牌的zOrder
+    self.m_lastOrder        = 1                 --最后选中牌的zOrder
 
-    self.m_aniEnabled = true                --是否有移动动画
-    self.m_autoShootDown = true             --点其他地方牌自动非选中
-    self.m_singleTopMode = false            --是否单点触摸模式
-    self.m_touchEnabled = false             --是否可触摸
-    self.m_isExpand = false                 --是否可拓展
+    self.m_aniEnabled       = true              --是否有移动动画
+    self.m_autoShootDown    = true              --点其他地方牌自动非选中
+    self.m_singleTopMode    = false             --是否单点触摸模式
+    self.m_touchEnabled     = false             --是否可触摸
+    self.m_isExpand         = false             --是否可拓展
 
-    self.m_startIndex = -1                  --开始点击下标
-    self.m_endIndex = -1                    --结束点击下标
+    self.m_startIndex       = -1                --开始点击下标
+    self.m_endIndex         = -1                --结束点击下标
 
-    self.m_expandCount = 5                  --默认拓展数量
-    self.m_shootHeight = 30                 --弹起高度
+    self.m_expandCount      = 5                 --默认拓展数量
+    self.m_shootHeight      = 30                --弹起高度
 
-    self.m_cardCallback = nil               --点击回调
-    self.m_isTouching = false               --是否正在点击
+    self.m_cardCallback     = nil               --点击回调
+    self.m_isTouching       = false             --是否正在点击
 end
 --[[
 创建
@@ -113,7 +113,7 @@ function CC_CardView:setCards(cards)
     
     if table.nums(child_tb) > table.nums(cards) then
         for j = table.nums(child_tb) , table.nums(cards) + 1 , -1 do
-            child_tb[j]:removeFromParent()
+            child_tb[j]:removeSelf()
         end
     end
     self:updateOrderAndSpace()
@@ -135,7 +135,7 @@ function CC_CardView:setCardSize(size)
     printInfo("CC_CardView->m_maxHoriSpace: " .. self.m_maxHoriSpace)
     printInfo("CC_CardView->m_minVertSpace: " .. self.m_minVertSpace)
     printInfo("CC_CardView->m_maxVertSpace: " .. self.m_maxVertSpace)
-    printInfo("CC_CardView->m_expandSpace: " .. self.m_expandSpace) 
+    printInfo("CC_CardView->m_expandSpace: "  .. self.m_expandSpace) 
 end
 --[[
 调整所有牌的位置
@@ -162,6 +162,7 @@ function CC_CardView:updateCardMetrics()
     self.m_curHoriSpace = math.max(self.m_curHoriSpace,self.m_minHoriSpace)
     self.m_curVertSpace = math.min(self.m_curVertSpace,self.m_maxVertSpace)
     self.m_curVertSpace = math.max(self.m_curVertSpace,self.m_minVertSpace)
+
     local row_width_tb = {}
     local width , height = 0 , 0
     local horiIndex , vertIndex = 0 , 0
@@ -273,7 +274,6 @@ end
 function CC_CardView:onTouchBegan(touch, event)
     if not self.m_rootNode then return end
     if not self.m_touchEnabled or self.m_isTouching then return false end
-    printInfo('touch began')
     self.m_isTouching = true
     local touchBeginPoint = self.m_rootNode:convertToNodeSpace(touch:getLocation())
     self.m_startIndex = self:getHitCardIndexForPos(touchBeginPoint)
@@ -301,7 +301,6 @@ end
 function CC_CardView:onTouchEnded(touch, event)
     if not self.m_rootNode then return end
     if not self.m_touchEnabled then return end
-    printInfo('touch ended')
     self.m_isTouching = false
     local touchPoint = self.m_rootNode:convertToNodeSpace(touch:getLocation())
     self:setCardsSelect(1,self:getCardCount() ,false)
@@ -324,7 +323,6 @@ function CC_CardView:onTouchEnded(touch, event)
 end
 --[[触摸取消]]
 function CC_CardView:onTouchCancelled(touch, event)
-    printInfo('touch cancelled')
     self.m_isTouching = false
     self.m_startIndex , self.m_endIndex = -1 , -1
 end
@@ -753,7 +751,6 @@ function CC_CardView:findCardSprites(cards)
         if allCards[idx] == cards[cardsIndex] then
              table.insert(index_tb,idx)
              cardsIndex = cardsIndex +1 
-             --printInfo("find index: " .. idx)
         end
     end
 
@@ -820,7 +817,7 @@ card:牌值
 function CC_CardView:removeCard(card)
     local cardSprite = self:findCardSprite(card)
     if not cardSprite then return false end
-    cardSprite:removeFromParent()
+    cardSprite:removeSelf()
     self:updateOrderAndSpace()
     return true
 end
@@ -831,7 +828,7 @@ index:下标
 function CC_CardView:removeCardByIndex(index)
     local cardSprite = self:getCardSprite(index)
     if not cardSprite then return false end
-    cardSprite:removeFromParent()
+    cardSprite:removeSelf()
     self:updateOrderAndSpace()
     return true
 end
@@ -859,7 +856,7 @@ function CC_CardView:removeCardsByIndex(indexs)
         end
     end
     for _ , child in pairs(cardSprite_tb)do
-        child:removeFromParent()
+        child:removeSelf()
     end
     self:updateOrderAndSpace()
 end
@@ -870,7 +867,7 @@ function CC_CardView:removeShootedCards()
     local shoot_tb = self:getAllShootedCaredSprite()
     if table.nums(shoot_tb)> 0  then
         for _ , cardSp in pairs(shoot_tb)do
-           cardSp:removeFromParent()
+           cardSp:removeSelf()
         end
     end
     self:updateOrderAndSpace()
@@ -895,7 +892,7 @@ function CC_CardView:removeShootedCardsByActions()
     end)
     self:runAction(cc.Sequence:create(delay,cfk))
 end
---[[删除指定牌]]
+--[[删除指定牌动画]]
 function CC_CardView:removeCardsByActions(cards)
     if type(cards) ~= 'table' then return end
     if table.nums(cards) == 0 then return end
