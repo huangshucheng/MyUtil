@@ -30,7 +30,7 @@ function CardView:Init()
     self.m_maxHoriSpace     = 0                 --最大水平距离
     self.m_minVertSpace     = 0                 --最小垂直距离
     self.m_maxVertSpace     = 0                 --最大垂直距离
-    self.m_expandSpace      = 0                 --水平拓展距离
+    self.m_expandSpace      = 0                 --水平展开距离
     self.m_curHoriSpace     = 0                 --当前水平距离
     self.m_curVertSpace     = 0                 --当前垂直距离
 
@@ -47,9 +47,9 @@ function CardView:Init()
     self.m_lastOrder        = 1                 --最后选中牌zOrder
     self.m_startIndex       = -1                --开始点击下标
     self.m_endIndex         = -1                --结束点击下标
-    self.m_expandCount      = 5                 --默认拓展数量
+    self.m_expandCount      = 3                 --默认展开数量
     self.m_shootHeight      = 30                --弹起高度
-
+    self.m_cardSpScale      = 1.0           
 end
 --[[
 创建
@@ -74,7 +74,9 @@ function CardView:initWithFile(fileStr)
     if type(fileStr) ~= "string" then return end
     self.m_imgFile = string.sub(fileStr,1,string.find(fileStr,'.png')-1) .. '/'
     local cardSp = self:createCardSprite(0x00)
-    if cardSp then self:setCardSize(cardSp:getContentSize()) end
+    if cardSp then 
+        self:setCardSize(cardSp:getContentSize())
+     end
     self.m_rootNode = cc.Node:create():addTo(self):move(display.left_bottom)
     --self.m_rootNode = cc.SpriteBatchNode:create(fileStr):addTo(self):move(display.left_bottom)
 end
@@ -87,6 +89,7 @@ function CardView:createCardSprite(card)
     local CardSprite =  CardSprite:create(self.m_imgFile , card)
     if CardSprite then
         CardSprite:setCardView(self)
+        CardSprite:setScale(self.m_cardSpScale)
         return CardSprite
     end
 end
@@ -127,12 +130,13 @@ function CardView:setCardSize(size)
     self.m_maxVertSpace = self.m_cardSize.height / 2 
     self.m_expandSpace  = self.m_maxHoriSpace
     self:updateCardMetrics()
-    
+    --[[
     printInfo("CardView->m_minHoriSpace: " .. self.m_minHoriSpace)
     printInfo("CardView->m_maxHoriSpace: " .. self.m_maxHoriSpace)
     printInfo("CardView->m_minVertSpace: " .. self.m_minVertSpace)
     printInfo("CardView->m_maxVertSpace: " .. self.m_maxVertSpace)
     printInfo("CardView->m_expandSpace:  " .. self.m_expandSpace) 
+    ]]
 end
 --[[
 调整所有牌的位置
@@ -266,7 +270,7 @@ function CardView:calcHoriSpaceFactor()
     return factor
 end
 --[[
-开始触摸
+触摸开始
 ]]
 function CardView:onTouchBegan(touch, event)
     if not self.m_rootNode then return end
@@ -465,7 +469,7 @@ function CardView:flipCardsShoot(beginIndex , endIndex)
     end
     self:updateCardMetrics()
 end
---[[拓展]]
+--[[展开]]
 function CardView:flipCardsExpand()
    local card_tb = self:getAllCardSprites()
    for _,cd_sp in pairs(card_tb) do
@@ -799,7 +803,7 @@ end
 card:牌值
 ]]
 function CardView:addCard(card)
-    return self:insertCard(self:getCardCount(),card)
+    self:insertCard(self:getCardCount(),card)
 end
 --[[
 添加牌一坨牌
@@ -1057,7 +1061,7 @@ function CardView:getShootedCardsByOrder()
     local cards_sp_tb = self:getShootedCardsSpriteByOrder()
     local cards_tb = {}
     for _ , card in pairs(cards_sp_tb) do
-        table.insert(cards_tb,card)
+        table.insert(cards_tb,card:getCard())
     end
     return cards_tb
 end
@@ -1076,11 +1080,12 @@ function CardView:getUnshootedCards()
     return unshoot_tb
 end
 --[[手牌整体缩放]]
-function CardView:setCardViewScale(scaleX,scaleY)
-    if type(scaleX) ~= 'number' then return end
-    scaleY = scaleY or scaleX
-    if self.m_rootNode then
-        self.m_rootNode:setScale(scaleX , scaleY)
+function CardView:setCardViewScale(scale)
+    if type(scale) ~= 'number' then return end
+    self.m_cardSpScale = scale
+    local allCardSp = self:getAllCardSprites()
+    for _,v in pairs(allCardSp)do
+        v:setScale(scale)
     end
 end
 --[[发送事件]]

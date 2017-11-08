@@ -32,6 +32,7 @@ function CardSprite:create(img,card)
     local cp = CardSprite.new()
     cp:setImageFilePrefix(img)
     cp:setCard(card)
+    --cp:setScale(1.2)
     return cp
 end
 
