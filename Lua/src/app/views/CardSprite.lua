@@ -32,7 +32,6 @@ function CardSprite:create(img,card)
     local cp = CardSprite.new()
     cp:setImageFilePrefix(img)
     cp:setCard(card)
-    --cp:setScale(1.2)
     return cp
 end
 
@@ -188,8 +187,8 @@ function CardSprite:setDestPos(pos)
     self.m_destPos = pos
     self:stopAllActions()
     if self.m_cardView and self.m_cardView:isMoveAnimationEnabled() then
-        --local ease_move = cc.EaseQuarticActionOut:create(cc.MoveTo:create(0.2,pos))
-        local ease_move = cc.EaseCircleActionOut:create(cc.MoveTo:create(0.2,pos))
+        --local ease_move = cc.EaseQuarticActionOut:create(cc.MoveTo:create(0.15,pos))
+        local ease_move = cc.EaseCircleActionOut:create(cc.MoveTo:create(0.18,pos))
         self:runAction(ease_move)
     else
         self:move(pos)

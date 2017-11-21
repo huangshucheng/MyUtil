@@ -21,7 +21,7 @@ function CardView:ctor()
 end
 
 function CardView:Init()
-    self.m_rootNode         = nil               --根节点，放所有牌
+    self.m_rootNode         = nil               --根节点
     self.m_imgFile          = nil               --文件路径（.png前加/）
     self.m_cardCallback     = nil               --点击回调
 
@@ -48,8 +48,8 @@ function CardView:Init()
     self.m_startIndex       = -1                --开始点击下标
     self.m_endIndex         = -1                --结束点击下标
     self.m_expandCount      = 3                 --默认展开数量
-    self.m_shootHeight      = 30                --弹起高度
-    self.m_cardSpScale      = 1.0           
+    self.m_shootHeight      = 25                --弹起高度
+    self.m_cardSpScale      = 1.0               --缩放
 end
 --[[
 创建
@@ -125,18 +125,11 @@ function CardView:setCardSize(size)
     if type(size) ~= 'table' then return end
     self.m_cardSize     = size
     self.m_minHoriSpace = self.m_cardSize.width  / 5
-    self.m_maxHoriSpace = self.m_cardSize.width  * 4 / 6
+    self.m_maxHoriSpace = self.m_cardSize.width  * 4 / 6 - 20
     self.m_minVertSpace = self.m_cardSize.height / 3
     self.m_maxVertSpace = self.m_cardSize.height / 2 
     self.m_expandSpace  = self.m_maxHoriSpace
     self:updateCardMetrics()
-    --[[
-    printInfo("CardView->m_minHoriSpace: " .. self.m_minHoriSpace)
-    printInfo("CardView->m_maxHoriSpace: " .. self.m_maxHoriSpace)
-    printInfo("CardView->m_minVertSpace: " .. self.m_minVertSpace)
-    printInfo("CardView->m_maxVertSpace: " .. self.m_maxVertSpace)
-    printInfo("CardView->m_expandSpace:  " .. self.m_expandSpace) 
-    ]]
 end
 --[[
 调整所有牌的位置
@@ -278,6 +271,9 @@ function CardView:onTouchBegan(touch, event)
     self.m_isTouching     = true
     local touchBeginPoint = self.m_rootNode:convertToNodeSpace(touch:getLocation())
     self.m_startIndex     = self:getHitCardIndexForPos(touchBeginPoint)
+    if self.m_startIndex ~= -1 then
+        self:setCardsSelect(self.m_startIndex,self.m_startIndex,true)
+    end
     return true
 end
 --[[
@@ -743,6 +739,7 @@ end
 查找牌值==cards的节点（不重复）
 cards:牌值table
 ]]
+--TODO ERROR
 function CardView:findCardSprites(cards)
     if type(cards) ~= 'table' then return {} end
     local index_tb = {}
@@ -1123,49 +1120,6 @@ end
 function CardView:onExit()
     self:removeTouch()
     display.removeUnusedSpriteFrames()
-end
--------for test----------
---[[删除选中牌，动画]]
-function CardView:removeShootedCardsByActions()
-    local shoot_tb = self:getAllShootedCaredSprite()
-    if table.nums(shoot_tb)> 0  then
-        self:setCardViewEnabled(false)
-        for _ , cardSp in pairs(shoot_tb)do
-           local removeSelf = cc.RemoveSelf:create()
-           local moveTo     = cc.MoveTo:create(0.2,cc.p(cardSp:getPositionX(),cardSp:getPositionY() + 120))
-           local fadeout    = cc.FadeOut:create(0.2)
-           local spawn      = cc.Spawn:create(moveTo,fadeout)
-           cardSp:runAction(cc.Sequence:create(spawn,removeSelf))
-        end
-    end
-    local delay = cc.DelayTime:create(0.2)
-    local cfk = cc.CallFunc:create(function()
-        self:updateOrderAndSpace()
-        self:setCardViewEnabled(true)
-    end)
-    self:runAction(cc.Sequence:create(delay,cfk))
-end
---[[删除指定牌，动画]]
-function CardView:removeCardsByActions(cards)
-    if type(cards) ~= 'table' then return end
-    if table.nums(cards) == 0 then return end
-    local card_tb = self:findCardSprites(cards)
-    if table.nums(card_tb) > 0 then
-        self:setCardViewEnabled(false)
-        for _ , cardSp in pairs(card_tb)do
-           local removeSelf = cc.RemoveSelf:create()
-           local moveTo     = cc.MoveTo:create(0.2,cc.p(cardSp:getPositionX(),cardSp:getPositionY() + 120))
-           local fadeout    = cc.FadeOut:create(0.2)
-           local spawn      = cc.Spawn:create(moveTo,fadeout)
-           cardSp:runAction(cc.Sequence:create(spawn,removeSelf))
-        end
-    end
-    local delay = cc.DelayTime:create(0.2)
-    local cfk = cc.CallFunc:create(function()
-        self:updateOrderAndSpace()
-        self:setCardViewEnabled(true)
-    end)
-    self:runAction(cc.Sequence:create(delay,cfk))
 end
 
 return CardView
