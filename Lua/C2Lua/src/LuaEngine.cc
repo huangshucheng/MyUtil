@@ -1,8 +1,6 @@
 #include "LuaEngine.h"
 
-const char* lua_file_path = "../../script/main.lua";
-
-#define  _CRT_SECURE_NO_WARNINGS
+const char* lua_file_path = "../script/main.lua";
 
 typedef	struct NumArray
 {
@@ -37,19 +35,19 @@ void stackDump(lua_State* L) {
 		case LUA_TSTRING: {
 			printf("'%s' ", lua_tostring(L, i));
 		}
-						  break;
+			break;
 		case LUA_TBOOLEAN: {
 			printf(lua_toboolean(L, i) ? "true " : "false ");
 		}
-						   break;
+			break;
 		case LUA_TNUMBER: {
 			printf("%g ", lua_tonumber(L, i));
 		}
-						  break;
+			break;
 		default: {
 			printf("%s ", lua_typename(L, t));
 		}
-				 break;
+			break;
 		}
 	}
 	cout << "\nend dump lua stack" << endl;
@@ -64,6 +62,8 @@ LuaEngine* LuaEngine::getInstance()
 	{
 		instance = new LuaEngine();
 		instance->init();
+		cout << "lua_version: " << LUA_VERSION << endl;
+		cout << "lua_release: " << LUA_RELEASE << endl;
 	}
 
 	return instance;
@@ -72,13 +72,13 @@ LuaEngine* LuaEngine::getInstance()
 bool LuaEngine::init()
 {
 	m_state = luaL_newstate();
-	luaL_openlibs(m_state);								//打开链接库
+	luaL_openlibs(m_state);
 	register_my_functions();
 	register_my_libs();
-	int fret = luaL_dofile(m_state, lua_file_path);		//执行脚本
+	int fret = luaL_dofile(m_state, lua_file_path);
 	if (fret){
 		std::cout << "read lua file error!" << std::endl;
-		lua_pop(m_state, 1);
+		lua_pop(m_state,1);
 		return false;
 	}
 	return true;
@@ -87,8 +87,8 @@ bool LuaEngine::init()
 int getCTable(lua_State* L)
 {
 	lua_newtable(L);	//创建table,放到栈顶
-	char buf[10] = { 0 };
-
+	char buf[10] = {0};
+	
 	for (int i = 1; i <= 10; i++){
 		lua_pushnumber(L, i);
 		sprintf_s(buf, "v-%d", i);
@@ -96,10 +96,10 @@ int getCTable(lua_State* L)
 		lua_settable(L, -3);
 	}
 	/*
-	//将key,value分别入栈，再将带有k,v的table放到栈顶，供lua获取
-	lua_pushnumber(L, 0);		//传入key 到table
-	lua_pushstring(L, "v1");	//传入value 到table
-	lua_settable(L, -3);		//弹出key,value，再将-3位置的table放到栈顶（此时table已经存放了key,value）
+		//将key,value分别入栈，再将带有k,v的table放到栈顶，供lua获取
+		lua_pushnumber(L, 0);		//传入key 到table
+		lua_pushstring(L, "v1");	//传入value 到table
+		lua_settable(L, -3);		//弹出key,value，再将-3位置的table放到栈顶（此时table已经存放了key,value）
 	*/
 	//stackDump(L);
 	return 1;						//返回参数，就是此table
@@ -109,7 +109,7 @@ int getCTable(lua_State* L)
 //例:将AddNum函数注册到lua,供lua使用
 int addNum(int a,int b)
 {
-return a + b;
+	return a + b;
 }
 */
 int addNum(lua_State* L)
@@ -179,29 +179,29 @@ static int l_map(lua_State* L)
 	{
 		lua_pushvalue(L, 2);
 		lua_rawgeti(L, 1, i);
-		lua_call(L, 1, i);
+		lua_call(L,1,i);
 		lua_rawseti(L, 1, i);
 	}
 	return 0;
 }
-//将Lua第一个参数，根据第二个参数切割，用table形式返回给lua
+
 static int l_split(lua_State* L)
 {
-	const char* s = luaL_checkstring(L, 1);
-	const char* sep = luaL_checkstring(L, 2);
+	const char* s = luaL_checkstring(L,1);
+	const char* sep = luaL_checkstring(L,2);
 	const char* e;
 	int i = 1;
 
 	lua_newtable(L);
-
-	while ((e = strchr(s, *sep)) != NULL)
+	
+	while ((e = strchr(s,*sep)) != NULL)
 	{
 		lua_pushlstring(L, s, e - s);
-		lua_rawseti(L, -2, i++);
+		lua_rawseti(L,-2,i++);
 		s = e + 1;
 	}
-
-	lua_pushstring(L, s);	//把cstr传入了table
+	
+	lua_pushstring(L,s);	//把cstr传入了table
 	lua_rawseti(L, -2, i);	//把cstr弹出了栈（此时已经进入了table，table[i]=cstr）,再把-2位置的table放到栈顶，供Lua获取
 
 	stackDump(L);
@@ -243,7 +243,7 @@ static int getSize(lua_State* L)
 	stackDump(L);
 	return 1;
 }
-//用下标获取value,有错
+//有错
 static int getArray(lua_State* L)
 {
 	cout << "getArray...." << endl;
@@ -265,24 +265,24 @@ static int showRes1(lua_State* L)	//一个返回值
 static int showRes2(lua_State* L)//一个参数，一个返回值
 {
 	char buf[50] = { 0 };
-	const char* val = luaL_checkstring(L, -1);
-	sprintf_s(buf, "res2--->%s", val);
+	const char* val = luaL_checkstring(L, -1);	
+	sprintf(buf, "res2--->%s", val);
 	lua_pushstring(L, buf);
 	return 1;
 }
-//mylib c模块数组
+//c模块数组
 static const struct luaL_Reg lua_my_lib[] = {
-	{ "l_showRes1", showRes1 },
-	{ "l_showRes2", showRes2 },
-	{ NULL, NULL }
+		{ "l_showRes1", showRes1 },
+		{ "l_showRes2", showRes2 },
+		{ NULL, NULL }
 };
-//myarray c模块数组
+
 static const struct luaL_Reg lua_my_array[] = {
-	{ "new", newArray },
-	{ "set", setArray },
-	{ "size", getSize },
-	{ "get", getArray },
-	{ NULL, NULL }
+		{ "new", newArray },
+		{ "set", setArray },
+		{ "size", getSize },
+		{ "get", getArray },
+		{ NULL, NULL }
 };
 //array lib
 int luaopen_array_lib(lua_State*L)
@@ -298,9 +298,9 @@ int luaopen_hcc_lib(lua_State*L)
 }
 //写入模块名称
 static const struct luaL_Reg myLoadLibs[] = {
-	{ "hcclib", luaopen_hcc_lib },
-	{ "array", luaopen_array_lib },
-	{ NULL, NULL }
+		{ "hcclib", luaopen_hcc_lib },
+		{ "array", luaopen_array_lib },
+		{ NULL, NULL }
 };
 /* /////////////////// 自定义c模块/////////////////// */
 
@@ -313,7 +313,7 @@ void LuaEngine::register_my_functions()
 	lua_register(m_state, "showTwo", l_show_return_2);
 	lua_register(m_state, "getTable", l_getTable);
 	lua_register(m_state, "addNum", addNum);
-	lua_register(m_state, "mapFunc", l_map);
+	lua_register(m_state, "mapFunc",l_map);
 	lua_register(m_state, "getCtb", getCTable);
 	lua_register(m_state, "l_split", l_split);
 	lua_register(m_state, "newArray", newArray);
@@ -338,7 +338,7 @@ void LuaEngine::testCallLua()
 	//读取变量
 	lua_getglobal(L, "name");   //string to be indexed
 	std::cout << "name = " << lua_tostring(L, -1) << std::endl;
-
+	
 	//读取数字
 	lua_getglobal(L, "version"); //number to be indexed
 	std::cout << "version = " << lua_tonumber(L, -1) << std::endl;
@@ -348,9 +348,9 @@ void LuaEngine::testCallLua()
 	lua_getglobal(L, "me");  //table to be indexed
 	if (!lua_istable(L, -1))
 	{
-	std::cout << "error:it is not a table" << std::endl;
+		std::cout << "error:it is not a table" << std::endl;
 	}
-
+	
 	//取表中元素
 	lua_getfield(L, -1, "name");
 	std::cout << "student name = " << lua_tostring(L, -1) << std::endl;
@@ -363,7 +363,7 @@ void LuaEngine::testCallLua()
 	lua_setfield(L, -4, "name");
 	lua_getfield(L, -3, "name");
 	std::cout << "student newName = " << lua_tostring(L, -1) << std::endl;*/
-
+	
 	//取函数
 	//lua_getglobal(L, "add");
 	//lua_pushnumber(L, 15);
@@ -371,10 +371,10 @@ void LuaEngine::testCallLua()
 	//lua_pcall(L, 2, 1, 0);//2-参数个数，1-返回值个数，//lua_pcall:调用函数，函数执行完，会将返回值压入栈顶
 	//lua_pop(L,1);
 	//std::cout << "5 + 15 = " << lua_tonumber(L, -1) << std::endl;
-
+	
 	//查看栈
 	//stackDump(L);
-
+	
 	//stackDump(L);
 	//lua_getglobal(L, "me"); //<= = push mytable
 	/*
@@ -395,7 +395,7 @@ void LuaEngine::testCallLua()
 	std::cout << "student gender = " << lua_tostring(L, -1) << std::endl;
 	*/
 	/*
-	lua_getglobal(L, "mytb"); //<= = push mytable
+	lua_getglobal(L, "mytb"); //<= = push mytable		
 	lua_pushnumber(L, 1); //<= = push key 1
 	lua_pushstring(L, "abc"); //<= = push value "abc"
 	lua_settable(L, -3); //<= = mytable[1] = "abc", pop key & value

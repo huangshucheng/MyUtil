@@ -1,7 +1,8 @@
-#pragma once
+﻿#pragma once
 #include <iostream>
 #include <direct.h>
-#include "../3rd/lua/lua.hpp"
+#include "../3rd/lua/lua.hpp"		//如果添加了附加包含目录，就不用绝对路径
+//#include "lua.hpp"
 using namespace std;
 class LuaEngine
 {
