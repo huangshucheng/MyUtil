@@ -143,32 +143,31 @@ void LuaPlusEngine::RegModule()
 void LuaPlusEngine::RegClass()
 {
 	//http://blog.csdn.net/kenkao/article/details/8138510
-	//Logger _log;
-	//_log.LOGMEMBER("loghcc...");
-	//LuaClass<Logger> cls = LuaClass<Logger>(m_state);
-	//cls.create("logger");
-	//cls.def()
 
 	LuaClass<Logger>(m_state)
-		.create("Logger")
-		.create<int>("Logger2")
-		.create<Logger*>("Logger3")
-		.destroy("Free")
-		.destroy("__gc")
-		.def("lm", &Logger::LOGMEMBER)
-		.def("lv", &Logger::LOGVIRTUAL);
-	/*
-	m_state->DoString(
-		"print('=========');"
-		"print(Logger, _G['MetaClass_.?AVLogger@@']);"
-		"l = Logger();"
-		"print(Logger2(250));"
-		);
-	*/
-	//m_state->DoString(
-	//	"print('=====2222222====');"
-	//	"print(mylog());"
-	//	);
+		.create("Logger")					// 定义构造函数 Logger::Logger()			//local lg = Logger();
+		.create<int>("Logger2")				// 定义构造函数 Logger::Logger(int)		//local lg2 = Logger(250);
+		.create<Logger*>("Logger3")			// 定义构造函数 Logger::Logger(Logger*)	//local lg3 = Logger(lg);
+		.destroy("Free")					// 定义析构函数 Logger::~Logger()			//lg:Free()		显示调用析构函数
+		.destroy("__gc")					// 定义析构函数 Logger::~Logger()			//自动调用析构函数
+		.def("LogMember", &Logger::LOGMEMBER)		// 定义成员函数 Logger::LOGMEMBER(const char*)	//lg:LogMember()
+		.def("LogVirtual", &Logger::LOGVIRTUAL)		// 定义成员函数					//log:LogVirtual()
+		.def("setValue", &Logger::setValue)			// 定义成员函数					//log:setValue(123)
+		.def("getValue", &Logger::getValue);		// 定义成员函数					//log:getValue()
+		//.def("callFunc", &Logger::callFunc);		//callback regist error
 
-	//this->doFile();//先执行文件，载入lua栈
+	///////////////////////////////////
+	this->doFile();//执行文件，载入lua栈
+}
+//注册logger类的成员函数
+void LuaPlusEngine::RegLogger()
+{
+	LuaObject globalsObj = m_state->GetGlobals();
+	Logger logger;
+	globalsObj.RegisterDirect("LOGMEMBER", logger, &Logger::LOGMEMBER);
+	globalsObj.RegisterDirect("LOGVIRTUAL", logger, &Logger::LOGVIRTUAL);
+
+	// test
+	m_state->DoString("LOGMEMBER('Hello')");
+	m_state->DoString("LOGVIRTUAL('Hello')");
 }

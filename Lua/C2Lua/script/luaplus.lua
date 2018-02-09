@@ -21,3 +21,16 @@ end
 
 --print(tostring(mymodule))
 --print(mymodule.add1(3,4))
+
+local logger = Logger();
+
+--local logger2 = Logger2(250);
+--local logger3 = Logger3(logger);
+--logger:LogMember("hcc--->LogMember")
+--logger:LogVirtual("hcc--->LogVirtual")
+--logger:setValue(255)
+--print(logger:getValue())
+
+--logger:Free()
+
+--print("callfunc:  " .. tostring(logger:callFunc(nil)))

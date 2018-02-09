@@ -15,6 +15,7 @@ public:
 
 	void RegModule();
 	void RegClass();
+	void RegLogger();
 
 public:
 	void doFile();

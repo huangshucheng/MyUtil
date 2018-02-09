@@ -34,6 +34,35 @@
 #include "lualib.h"
 #include "lauxlib.h"
 
+/* /////////////////// 自定义c模块/////////////////// */
+/*
+static int showRes1(lua_State* L)
+{
+	lua_pushstring(L, "I am res1");
+	return 1;
+}
+
+static int showRes2(lua_State* L)
+{
+	char buf[50] = { 0 };
+	const char* val = luaL_checkstring(L, -1);
+	sprintf(buf, "res2--->%s", val);
+	lua_pushstring(L, buf);
+	return 1;
+}
+//c模块数组
+static const struct luaL_Reg lua_my_lib[] = {
+		{ "l_showRes1", showRes1 },
+		{ "l_showRes2", showRes2 },
+		{ NULL, NULL }
+};
+int luaopen_hcc_lib(lua_State*L)
+{
+	luaL_newlib(L, lua_my_lib);
+	return 1;
+}
+*/
+/* /////////////////// 自定义c模块/////////////////// */
 
 /*
 ** these libs are loaded by lua.c and are readily available to any Lua
@@ -53,6 +82,7 @@ static const luaL_Reg loadedlibs[] = {
 #if defined(LUA_COMPAT_BITLIB)
   {LUA_BITLIBNAME, luaopen_bit32},
 #endif
+  //{ "hcclib", luaopen_hcc_lib },
   {NULL, NULL}
 };
 

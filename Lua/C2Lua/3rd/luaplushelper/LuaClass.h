@@ -63,10 +63,10 @@ private:
 	{
 		std::string metaname("MetaClass_");
 		metaname += typeid(Object).raw_name();
-
 		LuaObject obj = state->BoxPointer(pObj);
 		obj.SetMetatable(state->GetGlobal(metaname.c_str()));
 		//obj.PushStack();				//TODO hcc
+		obj.Push(state);				//??
 		return 1;
 	}
 
@@ -150,6 +150,7 @@ public:
 		std::string metaname("MetaClass_");
 		metaname += typeid(Object).raw_name();
 
+		std::cout << "metaname: " << metaname.c_str() << std::endl;
 		metaTableObj = luaGlobals.CreateTable(metaname.c_str());
 		metaTableObj.SetObject("__index", metaTableObj);
 		//metaTableObj.Register("__gc", &Destructor);
